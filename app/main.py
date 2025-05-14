@@ -365,24 +365,6 @@ def set_next_track():
         logger.info(f"Playlist reordered. New playlist: {media_playlist}")
         return jsonify({"status": "next_item_set", "nextFile": filename_to_set_next, "playlist": media_playlist})
 
-@app.route('/api/playlist/clear', methods=['POST'])
-def clear_playlist():
-    global media_playlist, current_media_index, is_playing
-    if mpv.stop(): # Stop MPV first
-        media_playlist = []
-        current_media_index = -1
-        is_playing = False
-        save_playlist_to_file() # Save empty playlist
-        logger.info("Playlist cleared and playback stopped.")
-        return jsonify({"status": "playlist_cleared", "playlist": media_playlist})
-    else:
-        # Even if MPV stop command fails, clear Flask playlist but warn user.
-        media_playlist = []
-        current_media_index = -1
-        is_playing = False
-        save_playlist_to_file() # Save empty playlist
-        logger.warning("Playlist cleared, but there might have been an issue stopping MPV.")
-        return jsonify({"status": "playlist_cleared_with_mpv_warning", "playlist": media_playlist}), 207
 
 @app.route('/api/settings/loop', methods=['POST'])
 def set_loop():
@@ -393,6 +375,41 @@ def set_loop():
         logger.info(f"Playlist loop status set to: {loop_playlist}")
         return jsonify({"loop_status": loop_playlist})
     return jsonify({"error": "Invalid request. 'loop' boolean field required."}), 400
+
+@app.route('/api/playlist/delete', methods=['POST'])
+def delete_file_from_playlist():
+    global media_playlist, current_media_index, is_playing
+    data = request.get_json()
+    if not data or 'filename' not in data:
+        return jsonify({"error": "Filename missing in request."}), 400
+
+    filename = data['filename']
+    if filename not in media_playlist:
+        return jsonify({"error": f"File '{filename}' not found in playlist."}), 404
+
+    idx = media_playlist.index(filename)
+    media_playlist.pop(idx)
+
+    # Remove file from uploads folder
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            logger.info(f"Deleted file from disk: {file_path}")
+    except Exception as e:
+        logger.error(f"Failed to delete file {file_path}: {e}")
+
+    # Adjust current_media_index if needed
+    if current_media_index == idx:
+        mpv.stop()
+        is_playing = False
+        current_media_index = -1
+    elif current_media_index > idx:
+        current_media_index -= 1
+
+    save_playlist_to_file()
+    logger.info(f"Deleted '{filename}' from playlist.")
+    return jsonify({"status": "deleted", "filename": filename, "playlist": media_playlist})
 
 # Serve uploaded files (mainly for potential direct access or if frontend needs to load them for previews)
 # In this app, MPV accesses them directly from filesystem, so this might not be strictly needed by frontend for playback.

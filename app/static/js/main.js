@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const loopCheckbox = document.getElementById('loopCheckbox');
 
     const playlistUl = document.getElementById('playlistUl');
-    const clearPlaylistButton = document.getElementById('clearPlaylistButton');
 
     const currentFileSpan = document.getElementById('currentFile');
     const playerStateSpan = document.getElementById('playerState');
@@ -56,38 +55,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- UI Update Functions ---
     function updatePlaylistUI(playlist = [], currentFile = null) {
-        playlistUl.innerHTML = ''; // Clear existing items
-        if (!Array.isArray(playlist)) {
-            console.error("Playlist data is not an array:", playlist);
-            playlist = []; // Default to empty array to prevent errors
-        }
-        playlist.forEach((item, index) => {
-            const li = document.createElement('li');
-            
-            // Create play button
-            const playSpan = document.createElement('span');
-            playSpan.textContent = item;
-            playSpan.className = 'play-title';
-            if (item === currentFile) {
-                li.classList.add('playing');
-            }
-            playSpan.addEventListener('click', () => playSpecificFile(item));
-            
-            // Create set-next button
-            const nextButton = document.createElement('button');
-            nextButton.textContent = 'Play Next';
-            nextButton.className = 'play-next-btn';
-            nextButton.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent triggering the li click
-                setNextTrack(item);
-            });
-            
-            li.dataset.filename = item;
-            li.appendChild(playSpan);
-            li.appendChild(nextButton);
-            playlistUl.appendChild(li);
-        });
+    playlistUl.innerHTML = '';
+    if (!Array.isArray(playlist)) {
+        console.error("Playlist data is not an array:", playlist);
+        playlist = [];
     }
+    playlist.forEach((item, index) => {
+        const li = document.createElement('li');
+
+        // Play button/text
+        const playSpan = document.createElement('span');
+        playSpan.textContent = item;
+        playSpan.className = 'play-title';
+        if (item === currentFile) {
+            li.classList.add('playing');
+        }
+        playSpan.addEventListener('click', () => playSpecificFile(item));
+
+        // Set-next button
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Play Next';
+        nextButton.className = 'play-next-btn';
+        nextButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setNextTrack(item);
+        });
+
+        // Add delete button
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.className = 'delete-btn';
+        deleteButton.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (confirm(`Delete "${item}" from playlist and disk?`)) {
+                const response = await fetchAPI('/playlist/delete', 'POST', { filename: item });
+                if (response && response.status === "deleted") {
+                    uploadStatus.textContent = `"${item}" deleted.`;
+                    uploadStatus.className = 'success-message';
+                    fetchAndRefreshStatus();
+                } else {
+                    uploadStatus.textContent = response?.error || 'Delete failed.';
+                    uploadStatus.className = 'error-message';
+                }
+            }
+        });
+
+        li.dataset.filename = item;
+        li.appendChild(playSpan);
+        li.appendChild(nextButton);
+        li.appendChild(deleteButton); // Add the delete button
+        playlistUl.appendChild(li);
+    });
+}
 
     function updateStatusUI(data) {
         if (!data) return;
@@ -194,17 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchAndRefreshStatus(); // Refresh to confirm change reflected
     });
 
-    clearPlaylistButton.addEventListener('click', async () => {
-        if (confirm("Are you sure you want to clear the entire playlist?")) {
-            const response = await fetchAPI('/playlist/clear', 'POST');
-            if (response) {
-                uploadStatus.textContent = 'Playlist cleared.';
-                uploadStatus.className = 'success-message';
-                updateStatusUI(response); // Update UI with empty playlist
-            }
-            fetchAndRefreshStatus();
-        }
-    });
+    
     
     refreshStatusButton.addEventListener('click', fetchAndRefreshStatus);
 
