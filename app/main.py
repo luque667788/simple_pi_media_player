@@ -3,6 +3,7 @@ import os
 import logging
 import time # Added to fix NameError
 import json # Added for playlist persistence
+import threading # For the image auto-advance timer
 
 # Custom logging setup
 from logging_config import setup_logging
@@ -33,6 +34,9 @@ media_playlist = [] # List of filenames (relative to UPLOAD_FOLDER)
 current_media_index = -1
 is_playing = False
 loop_playlist = False
+current_loop_mode = 'none'  # Persist the last set loop mode
+image_auto_advance_interval_seconds = 0 # 0 means disabled, value in seconds
+image_advance_timer = None # Will hold the threading.Timer object
 # current_transition = "fade" # Default, if we implement selectable transitions
 
 # --- Playlist Persistence Functions ---
@@ -73,6 +77,38 @@ mpv = MPVController() # Initialize the controller
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def is_image_file(filename):
+    if not filename:
+        return False
+    # Get the file extension
+    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+    return ext in ['png', 'jpg', 'jpeg', 'gif']
+
+def cancel_image_advance_timer():
+    global image_advance_timer
+    if image_advance_timer and image_advance_timer.is_alive(): # Check if timer is active
+        image_advance_timer.cancel()
+        image_advance_timer = None
+        logger.debug("Cancelled existing image advance timer.")
+
+def trigger_auto_next(expected_image_filename):
+    global current_media_index, media_playlist, is_playing, logger
+    logger.debug(f"Image advance timer triggered for {expected_image_filename}.")
+    
+    if is_playing and \
+       0 <= current_media_index < len(media_playlist) and \
+       media_playlist[current_media_index] == expected_image_filename and \
+       is_image_file(media_playlist[current_media_index]):
+        
+        logger.info(f"Image timer expired for {expected_image_filename}, attempting to advance to next.")
+        # Create an application context for background operation
+        with app.app_context():
+            _play_next_or_prev('next')
+    else:
+        logger.debug(f"Image advance timer for {expected_image_filename} is no longer relevant or conditions not met. "
+                     f"Current file: {media_playlist[current_media_index] if 0 <= current_media_index < len(media_playlist) else 'None'}, "
+                     f"Is playing: {is_playing}")
 
 # --- Routes ---
 @app.route('/')
@@ -134,44 +170,78 @@ def upload_files():
 
 @app.route('/api/playlist', methods=['GET'])
 def get_playlist():
-    global current_media_index, is_playing, loop_playlist
+    global current_loop_mode  # use the persisted mode
+    global current_media_index, is_playing, media_playlist, image_auto_advance_interval_seconds
     mpv_status = mpv.get_playback_status()
-    # Try to sync internal state with MPV's reported state if possible
-    # This is a simplified sync; a more robust sync would involve deeper checks
+    
     is_playing = mpv_status.get('is_playing_media', is_playing)
     current_file_from_mpv = mpv_status.get('current_file')
-    
-    # Update current_media_index based on what MPV says it's playing
+
     if current_file_from_mpv and current_file_from_mpv in media_playlist:
         try:
-            current_media_index = media_playlist.index(current_file_from_mpv)
+            new_index = media_playlist.index(current_file_from_mpv)
+            if current_media_index != new_index:
+                logger.debug(f"Syncing current_media_index from {current_media_index} to {new_index} based on MPV state ({current_file_from_mpv}).")
+                current_media_index = new_index
         except ValueError:
-            # File MPV is playing is not in our known playlist, or playlist is out of sync
-            logger.warning(f"MPV playing {current_file_from_mpv}, not in current Flask playlist or index out of sync.")
-            # Reset index if file not found, or handle as appropriate
-            # current_media_index = -1 
-    elif not current_file_from_mpv and not is_playing:
-        # If MPV reports no file and not playing, reflect that we are not at a specific index
-        # current_media_index = -1 # Or keep last known if that's preferred UX
-        pass # Keep current_media_index as is, might be pointing to the *next* to play
+            logger.warning(f"MPV playing {current_file_from_mpv}, which is in media_playlist but index() failed. This is unexpected.")
+    elif current_file_from_mpv and current_file_from_mpv not in media_playlist:
+        logger.warning(f"MPV playing {current_file_from_mpv}, which is NOT in our managed media_playlist. State may be desynced.")
+    elif not current_file_from_mpv:
+        if is_playing:
+            logger.debug(f"MPV reports no file path, but internal state was is_playing=True. Correcting to False.")
+            is_playing = False
 
-    logger.debug(f"Playlist requested. Current: {media_playlist}, Index: {current_media_index}, Playing: {is_playing}, Loop: {loop_playlist}")
     return jsonify({
         "playlist": media_playlist,
-        "currentIndex": current_media_index,
         "currentFile": media_playlist[current_media_index] if 0 <= current_media_index < len(media_playlist) else None,
         "isPlaying": is_playing,
-        "loop": loop_playlist,
-        "mpv_is_running": mpv_status.get('is_mpv_running', False)
+        "loop_mode": current_loop_mode,
+        "mpv_is_running": mpv_status.get('is_mpv_running', False),
+        "image_auto_advance_interval_seconds": image_auto_advance_interval_seconds
     })
+
+@app.route('/api/settings/image_interval', methods=['POST'])
+def set_image_interval():
+    global image_auto_advance_interval_seconds, is_playing, current_media_index, media_playlist, image_advance_timer
+    data = request.get_json()
+    if data and 'interval' in data:
+        try:
+            interval = int(data['interval'])
+            if interval >= 0:
+                old_interval = image_auto_advance_interval_seconds
+                image_auto_advance_interval_seconds = interval
+                logger.info(f"Image auto-advance interval changed from {old_interval}s to {image_auto_advance_interval_seconds}s.")
+                
+                cancel_image_advance_timer()
+
+                if is_playing and \
+                   0 <= current_media_index < len(media_playlist) and \
+                   is_image_file(media_playlist[current_media_index]) and \
+                   image_auto_advance_interval_seconds > 0:
+                    
+                    current_playing_image = media_playlist[current_media_index]
+                    image_advance_timer = threading.Timer(image_auto_advance_interval_seconds, trigger_auto_next, args=[current_playing_image])
+                    image_advance_timer.start()
+                    logger.info(f"Restarted image advance timer for currently playing image {current_playing_image} with new interval {image_auto_advance_interval_seconds}s.")
+
+                return jsonify({"status": "success", "image_auto_advance_interval_seconds": image_auto_advance_interval_seconds})
+            else:
+                return jsonify({"error": "Interval must be a non-negative integer."}), 400
+        except ValueError:
+            return jsonify({"error": "Invalid interval format. Must be an integer."}), 400
+    return jsonify({"error": "Interval missing in request."}), 400
 
 @app.route('/api/control/play', methods=['POST'])
 def control_play():
-    global current_media_index, is_playing, media_playlist
+    global current_media_index, is_playing, media_playlist, image_advance_timer
+    
+    cancel_image_advance_timer()
+
     data = request.get_json(silent=True) or {}
     target_filename = data.get('filename')
 
-    if not mpv.start_player(): # Ensure MPV is running, start if not.
+    if not mpv.start_player():
         logger.error("MPV failed to start. Cannot play.")
         return jsonify({"error": "MPV player is not available."}), 503
 
@@ -184,26 +254,31 @@ def control_play():
     elif not media_playlist:
         logger.info("Play command received but playlist is empty.")
         return jsonify({"status": "playlist_empty", "message": "Playlist is empty. Upload media first."}), 400
-    elif current_media_index == -1 and media_playlist: # If no specific file and playlist not empty, start from beginning
+    elif current_media_index == -1 and media_playlist:
         current_media_index = 0
-    elif not (0 <= current_media_index < len(media_playlist)) and media_playlist: # If index is somehow invalid, reset
+    elif not (0 <= current_media_index < len(media_playlist)) and media_playlist:
         logger.warning(f"Invalid current_media_index {current_media_index}, resetting to 0.")
         current_media_index = 0
     
-    # If we are here, current_media_index should be valid for a non-empty playlist
-    if not media_playlist: # Double check after logic
+    if not media_playlist:
         return jsonify({"status": "playlist_empty", "message": "Playlist is empty."}), 400
 
     file_to_play = media_playlist[current_media_index]
     logger.info(f"Play command: Attempting to play '{file_to_play}' at index {current_media_index}")
 
-    if mpv.load_file(file_to_play): # load_file now also implies play if MPV was idle
-        if mpv.play(): # Ensure it's unpaused
+    if mpv.load_file(file_to_play):
+        if mpv.play():
             is_playing = True
             logger.info(f"Playback started for: {file_to_play}")
-            return jsonify({"status": "playing", "currentFile": file_to_play, "currentIndex": current_media_index})
+
+            if is_image_file(file_to_play) and image_auto_advance_interval_seconds > 0:
+                image_advance_timer = threading.Timer(image_auto_advance_interval_seconds, trigger_auto_next, args=[file_to_play])
+                image_advance_timer.start()
+                logger.info(f"Started image advance timer for {file_to_play} ({image_auto_advance_interval_seconds}s).")
+            
+            return jsonify({"status": "playing", "currentFile": file_to_play, "currentIndex": current_media_index, "image_auto_advance_interval_seconds": image_auto_advance_interval_seconds})
         else:
-            is_playing = False # mpv.play() might have failed to unpause
+            is_playing = False
             logger.error(f"MPV loaded file {file_to_play} but failed to ensure playback state.")
             return jsonify({"error": f"Loaded {file_to_play} but failed to start/resume playback in MPV."}), 500
     else:
@@ -220,22 +295,41 @@ def control_pause():
         return jsonify({"status": "paused"})
     else:
         logger.warning("Failed to send pause command to MPV or MPV not running.")
-        # Check if MPV is running at all
         if not mpv.get_playback_status().get('is_mpv_running'):
             return jsonify({"error": "MPV is not running."}), 503
         return jsonify({"error": "Failed to pause playback."}), 500
 
 @app.route('/api/control/toggle_pause', methods=['POST'])
 def control_toggle_pause():
-    global is_playing
-    # We need a more reliable way to get the new state from mpv_controller
-    # For now, we'll assume the internal is_playing state of mpv_controller is updated
+    global is_playing, current_media_index, media_playlist, image_advance_timer
+    
+    was_playing = is_playing 
+
     if mpv.toggle_pause():
-        # Update Flask's is_playing based on the controller's assumed state after toggle
-        mpv_state = mpv.get_playback_status() # Get the latest assumed state
-        is_playing = mpv_state.get('is_playing_media', is_playing)
-        logger.info(f"Playback pause toggled. New assumed playing state: {is_playing}")
-        return jsonify({"status": "toggled_pause", "isPlaying": is_playing})
+        mpv_state = mpv.get_playback_status()
+        is_playing = mpv_state.get('is_playing_media', False)
+        current_file_from_mpv = mpv_state.get('current_file')
+
+        logger.info(f"Toggle pause successful. MPV reports playing: {is_playing}, file: {current_file_from_mpv}")
+
+        if is_playing:
+            if 0 <= current_media_index < len(media_playlist) and \
+               is_image_file(media_playlist[current_media_index]) and \
+               image_auto_advance_interval_seconds > 0:
+                
+                cancel_image_advance_timer()
+                current_image_file = media_playlist[current_media_index]
+                image_advance_timer = threading.Timer(image_auto_advance_interval_seconds, trigger_auto_next, args=[current_image_file])
+                image_advance_timer.start()
+                logger.info(f"Unpaused: Started/Restarted image advance timer for {current_image_file} ({image_auto_advance_interval_seconds}s).")
+        else:
+            if 0 <= current_media_index < len(media_playlist) and \
+               is_image_file(media_playlist[current_media_index]) and \
+               image_advance_timer and getattr(image_advance_timer, 'args', [None])[0] == media_playlist[current_media_index]:
+                cancel_image_advance_timer()
+                logger.info(f"Paused: Cancelled image advance timer for {media_playlist[current_media_index]}.")
+
+        return jsonify({"status": "toggled", "isPlaying": is_playing, "currentFile": current_file_from_mpv, "image_auto_advance_interval_seconds": image_auto_advance_interval_seconds})
     else:
         logger.warning("Failed to send toggle_pause command to MPV.")
         if not mpv.get_playback_status().get('is_mpv_running'):
@@ -245,9 +339,10 @@ def control_toggle_pause():
 @app.route('/api/control/stop', methods=['POST'])
 def control_stop():
     global is_playing, current_media_index
+    cancel_image_advance_timer()
     if mpv.stop():
         is_playing = False
-        current_media_index = -1 # Explicitly reset index when stopping
+        current_media_index = -1
         logger.info("Playback stopped. MPV now idle (black screen). Index reset.")
         return jsonify({"status": "stopped"})
     else:
@@ -257,22 +352,37 @@ def control_stop():
         return jsonify({"error": "Failed to stop playback."}), 500
 
 def _play_next_or_prev(direction):
-    global current_media_index, is_playing, media_playlist, loop_playlist
+    global current_media_index, is_playing, media_playlist, loop_playlist, image_advance_timer
+
+    cancel_image_advance_timer()
+
+    # Check if we're in a background thread (timer context)
+    is_background = False
+    try:
+        from flask import has_app_context
+        is_background = not has_app_context()
+    except (ImportError, RuntimeError):
+        # If we can't import has_app_context or there's an error, assume it might be background
+        is_background = True
 
     if not media_playlist:
         logger.info(f"Next/Prev called but playlist is empty.")
-        mpv.stop() # Ensure MPV is stopped if it was somehow playing
+        mpv.stop()
         is_playing = False
+        if is_background:
+            # Return None instead of a response when called from background
+            return None
         return jsonify({"status": "playlist_empty"}), 400
 
     if not mpv.get_playback_status().get('is_mpv_running'):
         logger.warning("Next/Prev called but MPV is not running. Attempting to start.")
         if not mpv.start_player():
-             return jsonify({"error": "MPV is not running and could not be started."}), 503
-        # If MPV just started, and we want to play next/prev from a known state, we might need to load current_media_index first
-        # For now, assume if it wasn't running, we start from index 0 or the current_media_index if valid.
+            if is_background:
+                # Return None instead of a response when called from background
+                return None
+            return jsonify({"error": "MPV is not running and could not be started."}), 503
         if not (0 <= current_media_index < len(media_playlist)):
-            current_media_index = 0 # Default to first item if index is invalid
+            current_media_index = 0
     
     num_items = len(media_playlist)
     if direction == "next":
@@ -285,7 +395,10 @@ def _play_next_or_prev(direction):
                 logger.info("Reached end of playlist, no loop. Stopping.")
                 mpv.stop()
                 is_playing = False
-                current_media_index = num_items -1 # Stay on last item visually
+                current_media_index = num_items -1
+                if is_background:
+                    # Return None instead of a response when called from background
+                    return None
                 return jsonify({"status": "playlist_ended"})
     elif direction == "previous":
         current_media_index -= 1
@@ -296,25 +409,35 @@ def _play_next_or_prev(direction):
             else:
                 logger.info("Reached start of playlist, no loop. Staying at first item.")
                 current_media_index = 0
-                # Optionally stop or let it continue playing the first item if it was already playing
-                # For now, we assume if they hit prev on first item, they want it to replay or stay.
-                # If it wasn't playing, it will load and play this item.
 
     file_to_play = media_playlist[current_media_index]
     logger.info(f"Changing track ({direction}) to: {file_to_play} at index {current_media_index}")
     if mpv.load_file(file_to_play):
-        if mpv.play(): # Ensure it plays
+        if mpv.play():
             is_playing = True
+            logger.info(f"Successfully loaded and started {file_to_play} for {direction}.")
+            if is_image_file(file_to_play) and image_auto_advance_interval_seconds > 0:
+                image_advance_timer = threading.Timer(image_auto_advance_interval_seconds, trigger_auto_next, args=[file_to_play])
+                image_advance_timer.start()
+                logger.info(f"Started image advance timer for {file_to_play} ({image_auto_advance_interval_seconds}s) after {direction}.")
+            if is_background:
+                # Return None instead of a response when called from background
+                return None
             return jsonify({"status": f"playing_{direction}", "currentFile": file_to_play, "currentIndex": current_media_index})
         else:
             is_playing = False
-            logger.error(f"MPV loaded {file_to_play} but failed to ensure playback state.")
+            logger.error(f"Loaded {file_to_play} for {direction}, but failed to start playback.")
+            if is_background:
+                # Return None instead of a response when called from background
+                return None
             return jsonify({"error": f"Loaded {file_to_play} but failed to start/resume playback in MPV."}), 500
     else:
         is_playing = False
         logger.error(f"MPV failed to load file for {direction}: {file_to_play}")
-        # Attempt to recover or stop
         mpv.stop()
+        if is_background:
+            # Return None instead of a response when called from background
+            return None
         return jsonify({"error": f"MPV could not load file '{file_to_play}' for {direction}. Playback stopped."}), 500
 
 @app.route('/api/control/next', methods=['POST'])
@@ -327,44 +450,32 @@ def control_previous():
 
 @app.route('/api/playlist/set_next', methods=['POST'])
 def set_next_track():
-    # This is a more complex feature: reordering the playlist or inserting.
-    # For simplicity, this could mean "play this file *after* the current one finishes".
-    # MPV's internal playlist (`playlist-play-index`, `loadfile <file> append-play`) could handle this.
-    # Or, Flask reorders its `media_playlist`.
-    # Let's implement a simple version: if a file is playing, queue this one up. If not, just play it.
     global media_playlist, current_media_index, is_playing
     data = request.get_json()
     if not data or 'filename' not in data:
-        return jsonify({"error": "Filename missing in request."}, 400)
+        return jsonify({"error": "Filename missing in request."}), 400
     
     filename_to_set_next = data['filename']
     if filename_to_set_next not in media_playlist:
         return jsonify({"error": f"File '{filename_to_set_next}' not found in playlist."}), 404
 
-    # Simplest interpretation: make this the item at current_media_index + 1
-    # and adjust the rest of the playlist. This requires list manipulation.
     try:
         target_idx_in_playlist = media_playlist.index(filename_to_set_next)
     except ValueError:
         return jsonify({"error": "File somehow not in playlist after check (race condition?)"}), 500
 
-    # If nothing is playing, or no valid current index, just make it the current and play
     if not is_playing or not (0 <= current_media_index < len(media_playlist)):
         current_media_index = target_idx_in_playlist
-        # Effectively becomes a 'play this file' command
-        save_playlist_to_file() # Playlist order might change if it plays now
-        return control_play() # Reuse the play logic
+        save_playlist_to_file()
+        return control_play()
     else:
-        # Item is playing. Reorder playlist: remove target, insert after current_media_index
         logger.info(f"Setting '{filename_to_set_next}' to play after '{media_playlist[current_media_index]}'.")
         media_playlist.pop(target_idx_in_playlist)
-        # Insert after current, or at end if current is last
         new_pos = current_media_index + 1
         media_playlist.insert(new_pos, filename_to_set_next)
-        save_playlist_to_file() # Save reordered playlist
+        save_playlist_to_file()
         logger.info(f"Playlist reordered. New playlist: {media_playlist}")
         return jsonify({"status": "next_item_set", "nextFile": filename_to_set_next, "playlist": media_playlist})
-
 
 @app.route('/api/settings/loop', methods=['POST'])
 def set_loop():
@@ -376,9 +487,31 @@ def set_loop():
         return jsonify({"loop_status": loop_playlist})
     return jsonify({"error": "Invalid request. 'loop' boolean field required."}), 400
 
+@app.route('/api/settings/loop_mode', methods=['POST'])
+def set_loop_mode():
+    global current_loop_mode
+    data = request.get_json()
+    if not data or 'mode' not in data:
+        return jsonify({"error": "Mode missing in request"}), 400
+        
+    mode = data['mode']
+    if mode not in ['none', 'file', 'playlist']:
+        return jsonify({"error": "Invalid mode. Use 'none', 'file', or 'playlist'"}), 400
+        
+    if mpv.set_loop_mode(mode):
+        current_loop_mode = mode
+        return jsonify({"status": "success", "loop_mode": mode})
+    return jsonify({"error": "Failed to set loop mode"}), 500
+
+@app.route('/api/control/loop_file', methods=['POST'])
+def loop_current_file():
+    if mpv.toggle_loop_file():
+        return jsonify({"status": "success", "message": "Loop toggled for current file"})
+    return jsonify({"status": "error", "message": "Failed to toggle loop"}), 500
+
 @app.route('/api/playlist/delete', methods=['POST'])
 def delete_file_from_playlist():
-    global media_playlist, current_media_index, is_playing
+    global media_playlist, current_media_index, is_playing, image_advance_timer
     data = request.get_json()
     if not data or 'filename' not in data:
         return jsonify({"error": "Filename missing in request."}), 400
@@ -390,7 +523,6 @@ def delete_file_from_playlist():
     idx = media_playlist.index(filename)
     media_playlist.pop(idx)
 
-    # Remove file from uploads folder
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     try:
         if os.path.exists(file_path):
@@ -399,7 +531,6 @@ def delete_file_from_playlist():
     except Exception as e:
         logger.error(f"Failed to delete file {file_path}: {e}")
 
-    # Adjust current_media_index if needed
     if current_media_index == idx:
         mpv.stop()
         is_playing = False
@@ -407,12 +538,16 @@ def delete_file_from_playlist():
     elif current_media_index > idx:
         current_media_index -= 1
 
+    if image_advance_timer and image_advance_timer.is_alive() and \
+       hasattr(image_advance_timer, 'args') and image_advance_timer.args and \
+       image_advance_timer.args[0] == filename:
+        cancel_image_advance_timer()
+        logger.debug(f"Cancelled image timer because the timed file {filename} is being deleted.")
+
     save_playlist_to_file()
     logger.info(f"Deleted '{filename}' from playlist.")
     return jsonify({"status": "deleted", "filename": filename, "playlist": media_playlist})
 
-# Serve uploaded files (mainly for potential direct access or if frontend needs to load them for previews)
-# In this app, MPV accesses them directly from filesystem, so this might not be strictly needed by frontend for playback.
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     logger.debug(f"Request for uploaded file: {filename}")
@@ -421,25 +556,18 @@ def uploaded_file(filename):
 @app.route('/api/mpv/restart', methods=['POST'])
 def restart_mpv_route():
     logger.info("API call to restart MPV.")
-    mpv.terminate_player() # Terminate existing instance
-    time.sleep(0.5) # Brief pause
-    if mpv.start_player(): # Start a new instance
+    mpv.terminate_player()
+    time.sleep(0.5)
+    if mpv.start_player():
         logger.info("MPV restarted successfully via API.")
         return jsonify({"status": "mpv_restarted"}), 200
     else:
         logger.error("Failed to restart MPV via API.")
         return jsonify({"error": "Failed to restart MPV."}), 500
 
-
-# --- Application Teardown ---
 @app.teardown_appcontext
 def teardown_mpv(exception=None):
-    # This is called when the application context ends. Good for initial MPV start.
-    # However, for ensuring MPV is *always* running when a request comes in, 
-    # checks within routes or a @before_request might be more suitable for starting.
-    # For cleanup on Flask app *exit*, this is not guaranteed for all exit types (e.g. crash, kill signal)
-    # A more robust MPV cleanup might be needed via atexit or signal handling if Flask dev server is killed. 
-    pass # MPV start is handled by first command or a dedicated startup check.
+    pass
 
 import atexit
 def cleanup_on_exit():
@@ -447,21 +575,17 @@ def cleanup_on_exit():
     mpv.terminate_player()
 atexit.register(cleanup_on_exit)
 
-
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
         logger.info(f"Created upload folder: {UPLOAD_FOLDER} on startup.")
     
-    # Playlist is loaded by load_playlist_from_file() call earlier
     logger.info(f"Initial playlist: {media_playlist}")
 
-    # Try to start MPV when Flask app starts, so it's ready.
     logger.info("Attempting to start MPV on Flask application startup...")
     if mpv.start_player():
         logger.info("MPV started successfully in idle mode.")
     else:
         logger.warning("MPV failed to start on application startup. It may need to be started manually or via an API call.")
-        # The app can still run, but playback will fail until MPV is up.
 
-    app.run(host='0.0.0.0', port=5000, debug=False) # debug=False for production, True for dev
+    app.run(host='0.0.0.0', port=5000, debug=False)

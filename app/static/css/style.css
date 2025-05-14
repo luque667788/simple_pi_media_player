@@ -140,3 +140,11 @@ label {
 .delete-btn:hover {
     background-color: #d32f2f;
 }
+.loop-controls {
+    margin: 10px 0;
+}
+
+#loopModeSelect {
+    padding: 5px;
+    margin-left: 5px;
+}

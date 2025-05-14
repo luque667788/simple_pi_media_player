@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const prevButton = document.getElementById('prevButton');
     const nextButton = document.getElementById('nextButton');
     const loopCheckbox = document.getElementById('loopCheckbox');
+    const loopModeSelect = document.getElementById('loopModeSelect');
 
     const playlistUl = document.getElementById('playlistUl');
 
@@ -19,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const mpvProcessStatusSpan = document.getElementById('mpvProcessStatus');
     const refreshStatusButton = document.getElementById('refreshStatusButton');
     const restartMpvButton = document.getElementById('restartMpvButton');
+
+    const setImageIntervalButton = document.getElementById('setImageIntervalButton');
+    const imageIntervalInput = document.getElementById('imageIntervalInput');
+    const currentImageIntervalSpan = document.getElementById('currentImageIntervalSpan');
 
     // --- API Helper ---
     async function fetchAPI(endpoint, method = 'GET', body = null) {
@@ -55,58 +60,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- UI Update Functions ---
     function updatePlaylistUI(playlist = [], currentFile = null) {
-    playlistUl.innerHTML = '';
-    if (!Array.isArray(playlist)) {
-        console.error("Playlist data is not an array:", playlist);
-        playlist = [];
-    }
-    playlist.forEach((item, index) => {
-        const li = document.createElement('li');
-
-        // Play button/text
-        const playSpan = document.createElement('span');
-        playSpan.textContent = item;
-        playSpan.className = 'play-title';
-        if (item === currentFile) {
-            li.classList.add('playing');
+        playlistUl.innerHTML = '';
+        if (!Array.isArray(playlist)) {
+            console.error("Playlist data is not an array:", playlist);
+            playlist = [];
         }
-        playSpan.addEventListener('click', () => playSpecificFile(item));
+        playlist.forEach((item, index) => {
+            const li = document.createElement('li');
 
-        // Set-next button
-        const nextButton = document.createElement('button');
-        nextButton.textContent = 'Play Next';
-        nextButton.className = 'play-next-btn';
-        nextButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            setNextTrack(item);
-        });
-
-        // Add delete button
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = 'Delete';
-        deleteButton.className = 'delete-btn';
-        deleteButton.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (confirm(`Delete "${item}" from playlist and disk?`)) {
-                const response = await fetchAPI('/playlist/delete', 'POST', { filename: item });
-                if (response && response.status === "deleted") {
-                    uploadStatus.textContent = `"${item}" deleted.`;
-                    uploadStatus.className = 'success-message';
-                    fetchAndRefreshStatus();
-                } else {
-                    uploadStatus.textContent = response?.error || 'Delete failed.';
-                    uploadStatus.className = 'error-message';
-                }
+            // Play button/text
+            const playSpan = document.createElement('span');
+            playSpan.textContent = item;
+            playSpan.className = 'play-title';
+            if (item === currentFile) {
+                li.classList.add('playing');
             }
-        });
+            playSpan.addEventListener('click', () => playSpecificFile(item));
 
-        li.dataset.filename = item;
-        li.appendChild(playSpan);
-        li.appendChild(nextButton);
-        li.appendChild(deleteButton); // Add the delete button
-        playlistUl.appendChild(li);
-    });
-}
+            // Set-next button
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Play Next';
+            nextButton.className = 'play-next-btn';
+            nextButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setNextTrack(item);
+            });
+
+            // Add delete button
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.className = 'delete-btn';
+            deleteButton.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (confirm(`Delete "${item}" from playlist and disk?`)) {
+                    const response = await fetchAPI('/playlist/delete', 'POST', { filename: item });
+                    if (response && response.status === "deleted") {
+                        uploadStatus.textContent = `"${item}" deleted.`;
+                        uploadStatus.className = 'success-message';
+                        fetchAndRefreshStatus();
+                    } else {
+                        uploadStatus.textContent = response?.error || 'Delete failed.';
+                        uploadStatus.className = 'error-message';
+                    }
+                }
+            });
+
+            li.dataset.filename = item;
+            li.appendChild(playSpan);
+            li.appendChild(nextButton);
+            li.appendChild(deleteButton); // Add the delete button
+            playlistUl.appendChild(li);
+        });
+    }
 
     function updateStatusUI(data) {
         if (!data) return;
@@ -116,7 +121,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if(data.status === "playlist_ended") playerStateSpan.textContent = "Playlist Ended";
         if(data.status === "stopped") playerStateSpan.textContent = "Stopped (Black Screen)";
         
-        loopCheckbox.checked = data.loop || false;
+        // Update loop mode dropdown
+        if (data.loop_mode) {
+            loopModeSelect.value = data.loop_mode;
+        }
+
+        // Update image auto-advance interval
+        if (currentImageIntervalSpan && imageIntervalInput && typeof data.image_auto_advance_interval_seconds !== 'undefined') {
+            currentImageIntervalSpan.textContent = data.image_auto_advance_interval_seconds;
+            imageIntervalInput.value = data.image_auto_advance_interval_seconds;
+        }
+        
         mpvProcessStatusSpan.textContent = data.mpv_is_running ? "Running" : "Not Running/Error";
         updatePlaylistUI(data.playlist, data.currentFile);
     }
@@ -208,12 +223,33 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchAndRefreshStatus();
     });
 
-    loopCheckbox.addEventListener('change', async () => {
-        await fetchAPI('/settings/loop', 'POST', { loop: loopCheckbox.checked });
-        fetchAndRefreshStatus(); // Refresh to confirm change reflected
+    loopModeSelect.addEventListener('change', async () => {
+        const mode = loopModeSelect.value;
+        const response = await fetchAPI('/settings/loop_mode', 'POST', { mode: mode });
+        if (response && response.status === "success") {
+            uploadStatus.textContent = `Loop mode set to: ${mode}`;
+            uploadStatus.className = 'success-message';
+        } else {
+            uploadStatus.textContent = response?.error || 'Failed to set loop mode';
+            uploadStatus.className = 'error-message';
+        }
     });
 
-    
+    if (setImageIntervalButton && imageIntervalInput) {
+        setImageIntervalButton.addEventListener('click', async () => {
+            const interval = parseInt(imageIntervalInput.value, 10);
+            if (isNaN(interval) || interval < 0) {
+                alert("Please enter a valid non-negative number for the interval.");
+                return;
+            }
+            const response = await fetchAPI('/settings/image_interval', 'POST', { interval });
+            if (response && response.status === "success") {
+                fetchAndRefreshStatus(); // Refresh playlist and status which includes the interval
+            } else {
+                alert('Error updating interval: ' + (response?.error || 'Unknown error'));
+            }
+        });
+    }
     
     refreshStatusButton.addEventListener('click', fetchAndRefreshStatus);
 

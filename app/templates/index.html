@@ -25,16 +25,29 @@
             <button id="stopButton">Stop (Black Screen)</button>
             <button id="prevButton">Previous</button>
             <button id="nextButton">Next</button>
-            <div>
-                <label for="loopCheckbox">Loop Playlist:</label>
-                <input type="checkbox" id="loopCheckbox">
+            <div class="loop-controls">
+                <label for="loopModeSelect">Loop Setting:</label>
+                <select id="loopModeSelect">
+                    <option value="none">No Loop (Stop at End)</option>
+                    <option value="file">Loop Current File</option>
+                    <option value="playlist">Auto-advance Playlist</option>
+                </select>
             </div>
+        </div>
+        
+        <div class="section" id="image-settings-section">
+            <h2>Image Settings</h2>
+            <label for="imageIntervalInput">Auto-Advance Interval (seconds, 0 to disable):</label>
+            <input type="number" id="imageIntervalInput" min="0" value="0" style="width: 60px;">
+            <button id="setImageIntervalButton">Set Interval</button>
+            <p>Current Interval: <span id="currentImageIntervalSpan">0</span>s</p>
         </div>
 
         <div class="section" id="playlist-section">
             <h2>Playlist</h2>
             <ul id="playlistUl"></ul>
         </div>
+
         
         <div class="section" id="status-section">
             <h2>Status</h2>

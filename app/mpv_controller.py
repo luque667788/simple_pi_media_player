@@ -61,6 +61,40 @@ class MPVController:
             logger.error(f"Generic error sending MPV command '{command_list}': {e}")
             return False
 
+    def _execute_command_and_get_response(self, command_list):
+        """Send command to MPV and wait for a response"""
+        if not self.process or self.process.poll() is not None:
+            logger.warning("Attempted to send command but MPV process is not running.")
+            return None
+        
+        try:
+            client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            client.connect(MPV_SOCKET_PATH)
+            cmd_str = json.dumps({"command": command_list}) + '\n'
+            client.sendall(cmd_str.encode('utf-8'))
+            
+            # Wait for and parse response
+            response_data = client.recv(1024)
+            client.close()
+            
+            if not response_data:
+                logger.warning(f"No response data received for command: {command_list}")
+                return None
+                
+            try:
+                response = json.loads(response_data.decode('utf-8'))
+                logger.debug(f"Command {command_list} response: {response}")
+                return response
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse JSON response from MPV: {response_data}")
+                return None
+        except socket.error as e:
+            logger.error(f"Socket error getting response for MPV command '{command_list}': {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Generic error getting response for MPV command '{command_list}': {e}")
+            return None
+
     def start_player(self):
         self._ensure_mpv_executable()
         if self.process and self.process.poll() is None:
@@ -85,7 +119,7 @@ class MPVController:
             '--force-window=immediate',
             '--input-ipc-server=' + MPV_SOCKET_PATH,
             '--idle=yes',
-            '--image-display-duration=5', # Default 5s for images
+            '--image-display-duration=inf', # Default infinite for images
             '--log-file=' + MPV_LOG_PATH,
             '--msg-level=all=info' # MPV log level
         ]
@@ -190,12 +224,17 @@ class MPVController:
         return False
 
     def toggle_pause(self):
+        """Toggle between play and pause states"""
         if self._send_command(["cycle", "pause"]):
-            # We need to query the actual pause state to update is_playing_media accurately
-            # This is more complex, for now, we assume it toggles successfully
-            # For a robust solution, query: {"command": ["get_property", "pause"]}
-            self.is_playing_media = not self.is_playing_media # This is an assumption
-            logger.info(f"Toggled pause. Assumed playing state: {self.is_playing_media}")
+            # Query the actual pause state after toggling
+            pause_response = self._execute_command_and_get_response(["get_property", "pause"])
+            if pause_response and "data" in pause_response:
+                self.is_playing_media = not pause_response["data"]
+                logger.info(f"Toggled pause. Actual playing state from MPV: {self.is_playing_media}")
+            else:
+                # If we can't get the state, assume it toggled successfully
+                self.is_playing_media = not self.is_playing_media
+                logger.info(f"Toggled pause. Assumed playing state: {self.is_playing_media}")
             return True
         return False
 
@@ -259,19 +298,90 @@ class MPVController:
         return True
 
     def get_playback_status(self):
-        """Queries MPV for its current status. More complex and requires response handling."""
-        # Example: {"command": ["get_property", "playback-time"]}
-        # Example: {"command": ["get_property", "pause"]}
-        # Example: {"command": ["get_property", "path"]}
-        # This would require robust request-response handling in _send_command
-        # For now, we rely on internal state tracking, which can get out of sync.
-        return {
+        """Queries MPV for its current status."""
+        status = {
             "is_mpv_running": self.process is not None and self.process.poll() is None,
             "current_file": self.current_file,
             "is_playing_media": self.is_playing_media
         }
+        
+        if not status["is_mpv_running"]:
+            return status
+            
+        # Try to get the current file path from MPV
+        try:
+            path_response = self._execute_command_and_get_response(["get_property", "path"])
+            if path_response and "data" in path_response:
+                # Path property available - we have a file loaded
+                current_path = path_response["data"]
+                # Extract just the filename, not the full path
+                if current_path:
+                    filename = os.path.basename(current_path)
+                    status["current_file"] = filename
+            elif path_response and "error" in path_response and "property unavailable" in path_response.get("error", ""):
+                # This is normal when no file is loaded
+                logger.debug("MPV reports no file path (property unavailable) - likely no file is loaded.")
+                status["current_file"] = None
+                status["is_playing_media"] = False
+        except Exception as e:
+            logger.error(f"Error querying MPV path: {e}")
+        
+        # Check if we are paused
+        try:
+            pause_response = self._execute_command_and_get_response(["get_property", "pause"])
+            if pause_response and "data" in pause_response:
+                # Use the actual pause state to set is_playing_media
+                status["is_playing_media"] = not pause_response["data"]
+        except Exception as e:
+            logger.error(f"Error querying MPV pause state: {e}")
+            
+        return status
 
-# Example usage (for testing this module directly):
+    def get_loop_status(self):
+        """Get current loop settings"""
+        loop_status = {"loop_file": False, "loop_playlist": False}
+        
+        if not self.process or self.process.poll() is not None:
+            return loop_status
+            
+        try:
+            # Get loop-file status
+            loop_file_response = self._execute_command_and_get_response(["get_property", "loop-file"])
+            if loop_file_response and "data" in loop_file_response:
+                loop_status["loop_file"] = loop_file_response["data"] != "no"
+                
+            # Get loop-playlist status
+            loop_playlist_response = self._execute_command_and_get_response(["get_property", "loop-playlist"])
+            if loop_playlist_response and "data" in loop_playlist_response:
+                loop_status["loop_playlist"] = loop_playlist_response["data"] != "no"
+                
+        except Exception as e:
+            logger.error(f"Failed to get loop status: {e}")
+            
+        return loop_status
+
+    def set_loop_mode(self, mode):
+        """Set loop mode
+
+        Args:
+            mode (str): One of 'none', 'file', or 'playlist'
+        """
+        try:
+            if mode == 'none':
+                self._send_command(["set_property", "loop-file", "no"])
+                self._send_command(["set_property", "loop-playlist", "no"])
+            elif mode == 'file':
+                self._send_command(["set_property", "loop-file", "inf"])
+                self._send_command(["set_property", "loop-playlist", "no"])
+            elif mode == 'playlist':
+                self._send_command(["set_property", "loop-file", "no"])
+                self._send_command(["set_property", "loop-playlist", "inf"])
+            return True
+        except Exception as e:
+            logger.error(f"Failed to set loop mode {mode}: {e}")
+            return False
+
+    # Example usage (for testing this module directly):
 if __name__ == '__main__':
     # Setup basic logging for standalone testing
     logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] [%(levelname)s] [%(module)s] %(message)s')
