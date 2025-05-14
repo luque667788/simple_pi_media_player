@@ -170,11 +170,28 @@ def upload_files():
 
 @app.route('/api/playlist', methods=['GET'])
 def get_playlist():
-    global current_loop_mode  # use the persisted mode
-    global current_media_index, is_playing, media_playlist, image_auto_advance_interval_seconds
+    global current_loop_mode, current_media_index, is_playing, media_playlist, loop_playlist
+
     mpv_status = mpv.get_playback_status()
     
-    is_playing = mpv_status.get('is_playing_media', is_playing)
+    # --- AUTO-ADVANCE FOR VIDEOS ---
+    status = mpv_status.get('status')
+    eof_reached = mpv_status.get('eof_reached', False)
+    
+    if (status == 'stopped' or eof_reached) and 0 <= current_media_index < len(media_playlist):
+        logger.info(f"Status: {status}, EOF reached: {eof_reached}")
+        curr_file = media_playlist[current_media_index]
+        if not is_image_file(curr_file):
+            logger.info(f"Video ended, preparing to advance from '{curr_file}'")
+            # Determine next index (wrap if looping)
+            if loop_playlist or current_media_index < len(media_playlist) - 1:
+                next_index = (current_media_index + 1) % len(media_playlist)
+                current_media_index = next_index
+                next_file = media_playlist[next_index]
+                logger.info(f"Advancing to next media: '{next_file}' (index {next_index})")
+                # Load and play next media
+                mpv.load_file(next_file, transition="fade")
+
     current_file_from_mpv = mpv_status.get('current_file')
 
     if current_file_from_mpv and current_file_from_mpv in media_playlist:
@@ -489,7 +506,7 @@ def set_loop():
 
 @app.route('/api/settings/loop_mode', methods=['POST'])
 def set_loop_mode():
-    global current_loop_mode
+    global current_loop_mode, loop_playlist
     data = request.get_json()
     if not data or 'mode' not in data:
         return jsonify({"error": "Mode missing in request"}), 400
@@ -500,6 +517,7 @@ def set_loop_mode():
         
     if mpv.set_loop_mode(mode):
         current_loop_mode = mode
+        loop_playlist = (mode == 'playlist')  # enable playlist looping when selected
         return jsonify({"status": "success", "loop_mode": mode})
     return jsonify({"error": "Failed to set loop mode"}), 500
 

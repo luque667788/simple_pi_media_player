@@ -70,10 +70,13 @@ class MPVController:
         try:
             client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             client.connect(MPV_SOCKET_PATH)
-            cmd_str = json.dumps({"command": command_list}) + '\n'
+            # Set a unique request ID to match the response
+            request_id = int(time.time() * 1000) % 1000000
+            cmd_str = json.dumps({"command": command_list, "request_id": request_id}) + '\n'
             client.sendall(cmd_str.encode('utf-8'))
             
-            # Wait for and parse response
+            # Wait for and parse response - timeout after 1 second
+            client.settimeout(1.0)
             response_data = client.recv(1024)
             client.close()
             
@@ -82,12 +85,24 @@ class MPVController:
                 return None
                 
             try:
-                response = json.loads(response_data.decode('utf-8'))
-                logger.debug(f"Command {command_list} response: {response}")
-                return response
-            except json.JSONDecodeError:
-                logger.error(f"Failed to parse JSON response from MPV: {response_data}")
+                # The response might contain multiple JSON objects (e.g., if events are emitted)
+                # We need to find the one that matches our request_id
+                for line in response_data.decode('utf-8').splitlines():
+                    try:
+                        resp = json.loads(line)
+                        if 'request_id' in resp and resp['request_id'] == request_id:
+                            return resp
+                    except json.JSONDecodeError:
+                        continue
+                        
+                logger.warning(f"Could not find matching response for request_id {request_id}")
                 return None
+            except Exception as e:
+                logger.error(f"Failed to parse response from MPV: {e}, Data: {response_data}")
+                return None
+        except socket.timeout:
+            logger.error(f"Socket timeout getting response for MPV command '{command_list}'")
+            return None
         except socket.error as e:
             logger.error(f"Socket error getting response for MPV command '{command_list}': {e}")
             return None
@@ -162,35 +177,34 @@ class MPVController:
 
         logger.info(f"Loading file: {full_path} with transition: {transition}")
         
-        # Simple implementation of transitions
+        # Enable observing EOF events (ensuring auto-advance works)
+        self._send_command(["set_property", "keep-open", "no"])
+        
+        # Universal fade transition using window alpha
         if transition == "fade" and self.is_playing_media:
-            # For a simple fade effect:
-            # 1. Set property for crossfading if it's a video, uses MPV's internal fading
-            self._send_command(["set_property", "video-sync", "display-resample"])
-            # 2. For images, we'll use a basic fade-out and fade-in approach
-            file_ext = os.path.splitext(filepath)[1].lower()
-            if file_ext in ['.jpg', '.jpeg', '.png', '.gif']:
-                # For images: gradual decrease in alpha, then load new file
-                for i in range(10, 0, -1):  # 10 steps of fading
-                    opacity = i / 10.0
-                    self._send_command(["set_property", "alpha", str(opacity)])
-                    time.sleep(0.05)  # 50ms between steps = ~0.5s total fade
-            
-            # Now load the new file
-            success = self._send_command(["loadfile", full_path, "replace"])
-            
-            # Fade back in for images
-            if file_ext in ['.jpg', '.jpeg', '.png', '.gif'] and success:
-                for i in range(1, 11):  # 10 steps of fading in
-                    opacity = i / 10.0
-                    self._send_command(["set_property", "alpha", str(opacity)])
-                    time.sleep(0.05)
-            
-            if success:
-                self.current_file = filepath
-                self.is_playing_media = True
-                logger.info(f"File {filepath} loaded into MPV with fade transition.")
-                return True
+            # Fade out current media
+            for i in range(10, 0, -1):  # 10 steps fade-out
+                opacity = i / 10.0
+                self._send_command(["set_property", "alpha", str(opacity)])
+                time.sleep(0.05)
+
+            # Load new file
+            if not self._send_command(["loadfile", full_path, "replace"]):
+                logger.error(f"Failed to send loadfile command for {filepath}.")
+                return False
+
+            # Update state
+            self.current_file = filepath
+            self.is_playing_media = True
+
+            # Fade in new media
+            for i in range(1, 11):  # 10 steps fade-in
+                opacity = i / 10.0
+                self._send_command(["set_property", "alpha", str(opacity)])
+                time.sleep(0.05)
+
+            logger.info(f"File {filepath} loaded into MPV with smooth fade transition.")
+            return True
         else:
             # No transition or MPV wasn't playing, just load directly
             if self._send_command(["loadfile", full_path, "replace"]):
@@ -307,34 +321,36 @@ class MPVController:
         
         if not status["is_mpv_running"]:
             return status
-            
-        # Try to get the current file path from MPV
+
+        # Check if we're at end-of-file - directly detects video completion
         try:
-            path_response = self._execute_command_and_get_response(["get_property", "path"])
-            if path_response and "data" in path_response:
-                # Path property available - we have a file loaded
-                current_path = path_response["data"]
-                # Extract just the filename, not the full path
-                if current_path:
-                    filename = os.path.basename(current_path)
-                    status["current_file"] = filename
-            elif path_response and "error" in path_response and "property unavailable" in path_response.get("error", ""):
-                # This is normal when no file is loaded
-                logger.debug("MPV reports no file path (property unavailable) - likely no file is loaded.")
-                status["current_file"] = None
-                status["is_playing_media"] = False
+            eof_resp = self._execute_command_and_get_response(["get_property", "eof-reached"])
+            if eof_resp and "data" in eof_resp:
+                status["eof_reached"] = eof_resp["data"]
+                if eof_resp["data"]:
+                    status["status"] = "stopped"
+                    logger.info("MPV reports end-of-file reached")
         except Exception as e:
-            logger.error(f"Error querying MPV path: {e}")
-        
-        # Check if we are paused
-        try:
-            pause_response = self._execute_command_and_get_response(["get_property", "pause"])
-            if pause_response and "data" in pause_response:
-                # Use the actual pause state to set is_playing_media
-                status["is_playing_media"] = not pause_response["data"]
-        except Exception as e:
-            logger.error(f"Error querying MPV pause state: {e}")
+            logger.error(f"Error querying MPV eof-reached: {e}")
             
+        # Also check idle-active as backup
+        if "status" not in status:
+            try:
+                idle_resp = self._execute_command_and_get_response(["get_property", "idle-active"])
+                if idle_resp and "data" in idle_resp and idle_resp["data"]:
+                    status["status"] = "stopped"
+                else:
+                    # Query pause state: False => playing, True => paused
+                    pause_resp = self._execute_command_and_get_response(["get_property", "pause"])
+                    if pause_resp and "data" in pause_resp:
+                        status["status"] = "paused" if pause_resp["data"] else "playing"
+                        status["is_playing_media"] = not pause_resp["data"]
+                    else:
+                        status["status"] = None
+            except Exception as e:
+                logger.error(f"Error querying MPV status: {e}")
+                status["status"] = None
+
         return status
 
     def get_loop_status(self):
