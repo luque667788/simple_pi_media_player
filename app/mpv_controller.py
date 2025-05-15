@@ -134,7 +134,6 @@ class MPVController:
             '--force-window=immediate',
             '--input-ipc-server=' + MPV_SOCKET_PATH,
             '--idle=yes',
-            '--image-display-duration=inf', # Default infinite for images
             '--log-file=' + MPV_LOG_PATH,
             '--msg-level=all=info' # MPV log level
         ]

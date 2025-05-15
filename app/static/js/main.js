@@ -21,10 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshStatusButton = document.getElementById('refreshStatusButton');
     const restartMpvButton = document.getElementById('restartMpvButton');
 
-    const setImageIntervalButton = document.getElementById('setImageIntervalButton');
-    const imageIntervalInput = document.getElementById('imageIntervalInput');
-    const currentImageIntervalSpan = document.getElementById('currentImageIntervalSpan');
-
     // --- API Helper ---
     async function fetchAPI(endpoint, method = 'GET', body = null) {
         const options = {
@@ -124,12 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update loop mode dropdown
         if (data.loop_mode) {
             loopModeSelect.value = data.loop_mode;
-        }
-
-        // Update image auto-advance interval
-        if (currentImageIntervalSpan && imageIntervalInput && typeof data.image_auto_advance_interval_seconds !== 'undefined') {
-            currentImageIntervalSpan.textContent = data.image_auto_advance_interval_seconds;
-            imageIntervalInput.value = data.image_auto_advance_interval_seconds;
         }
         
         mpvProcessStatusSpan.textContent = data.mpv_is_running ? "Running" : "Not Running/Error";
@@ -235,22 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    if (setImageIntervalButton && imageIntervalInput) {
-        setImageIntervalButton.addEventListener('click', async () => {
-            const interval = parseInt(imageIntervalInput.value, 10);
-            if (isNaN(interval) || interval < 0) {
-                alert("Please enter a valid non-negative number for the interval.");
-                return;
-            }
-            const response = await fetchAPI('/settings/image_interval', 'POST', { interval });
-            if (response && response.status === "success") {
-                fetchAndRefreshStatus(); // Refresh playlist and status which includes the interval
-            } else {
-                alert('Error updating interval: ' + (response?.error || 'Unknown error'));
-            }
-        });
-    }
-    
     refreshStatusButton.addEventListener('click', fetchAndRefreshStatus);
 
     restartMpvButton.addEventListener('click', async () => {

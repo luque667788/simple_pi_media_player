@@ -12,7 +12,7 @@
 
         <div class="section" id="upload-section">
             <h2>Upload Media</h2>
-            <input type="file" id="mediaUploadInput" multiple accept="image/*,video/*">
+            <input type="file" id="mediaUploadInput" multiple accept="video/*">
             <button id="uploadButton">Upload Files</button>
             <p id="uploadStatus"></p>
         </div>
@@ -35,14 +35,6 @@
             </div>
         </div>
         
-        <div class="section" id="image-settings-section">
-            <h2>Image Settings</h2>
-            <label for="imageIntervalInput">Auto-Advance Interval (seconds, 0 to disable):</label>
-            <input type="number" id="imageIntervalInput" min="0" value="0" style="width: 60px;">
-            <button id="setImageIntervalButton">Set Interval</button>
-            <p>Current Interval: <span id="currentImageIntervalSpan">0</span>s</p>
-        </div>
-
         <div class="section" id="playlist-section">
             <h2>Playlist</h2>
             <ul id="playlistUl"></ul>

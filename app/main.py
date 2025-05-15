@@ -19,7 +19,7 @@ app = Flask(__name__, template_folder='templates', static_folder='static')
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 UPLOAD_FOLDER = os.path.join(PROJECT_ROOT, 'app', 'uploads')
 PLAYLIST_FILE = os.path.join(PROJECT_ROOT, 'playlist.json') # For persisting playlist
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi', 'mkv'}
+ALLOWED_EXTENSIONS = {'mp4', 'mov', 'avi', 'mkv'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 300 * 1024 * 1024  # 300 MB upload limit
@@ -35,8 +35,6 @@ current_media_index = -1
 is_playing = False
 loop_playlist = False
 current_loop_mode = 'none'  # Persist the last set loop mode
-image_auto_advance_interval_seconds = 0 # 0 means disabled, value in seconds
-image_advance_timer = None # Will hold the threading.Timer object
 # current_transition = "fade" # Default, if we implement selectable transitions
 
 # --- Playlist Persistence Functions ---
@@ -77,38 +75,6 @@ mpv = MPVController() # Initialize the controller
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def is_image_file(filename):
-    if not filename:
-        return False
-    # Get the file extension
-    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
-    return ext in ['png', 'jpg', 'jpeg', 'gif']
-
-def cancel_image_advance_timer():
-    global image_advance_timer
-    if image_advance_timer and image_advance_timer.is_alive(): # Check if timer is active
-        image_advance_timer.cancel()
-        image_advance_timer = None
-        logger.debug("Cancelled existing image advance timer.")
-
-def trigger_auto_next(expected_image_filename):
-    global current_media_index, media_playlist, is_playing, logger
-    logger.debug(f"Image advance timer triggered for {expected_image_filename}.")
-    
-    if is_playing and \
-       0 <= current_media_index < len(media_playlist) and \
-       media_playlist[current_media_index] == expected_image_filename and \
-       is_image_file(media_playlist[current_media_index]):
-        
-        logger.info(f"Image timer expired for {expected_image_filename}, attempting to advance to next.")
-        # Create an application context for background operation
-        with app.app_context():
-            _play_next_or_prev('next')
-    else:
-        logger.debug(f"Image advance timer for {expected_image_filename} is no longer relevant or conditions not met. "
-                     f"Current file: {media_playlist[current_media_index] if 0 <= current_media_index < len(media_playlist) else 'None'}, "
-                     f"Is playing: {is_playing}")
 
 # --- Routes ---
 @app.route('/')
@@ -181,16 +147,15 @@ def get_playlist():
     if (status == 'stopped' or eof_reached) and 0 <= current_media_index < len(media_playlist):
         logger.info(f"Status: {status}, EOF reached: {eof_reached}")
         curr_file = media_playlist[current_media_index]
-        if not is_image_file(curr_file):
-            logger.info(f"Video ended, preparing to advance from '{curr_file}'")
-            # Determine next index (wrap if looping)
-            if loop_playlist or current_media_index < len(media_playlist) - 1:
-                next_index = (current_media_index + 1) % len(media_playlist)
-                current_media_index = next_index
-                next_file = media_playlist[next_index]
-                logger.info(f"Advancing to next media: '{next_file}' (index {next_index})")
-                # Load and play next media
-                mpv.load_file(next_file, transition="fade")
+        # logger.info(f"Video ended, preparing to advance from '{curr_file}'") # Removed is_image_file check
+        # Determine next index (wrap if looping)
+        if loop_playlist or current_media_index < len(media_playlist) - 1:
+            next_index = (current_media_index + 1) % len(media_playlist)
+            current_media_index = next_index
+            next_file = media_playlist[next_index]
+            logger.info(f"Advancing to next media: '{next_file}' (index {next_index})")
+            # Load and play next media
+            mpv.load_file(next_file, transition="fade")
 
     current_file_from_mpv = mpv_status.get('current_file')
 
@@ -215,46 +180,12 @@ def get_playlist():
         "isPlaying": is_playing,
         "loop_mode": current_loop_mode,
         "mpv_is_running": mpv_status.get('is_mpv_running', False),
-        "image_auto_advance_interval_seconds": image_auto_advance_interval_seconds
     })
-
-@app.route('/api/settings/image_interval', methods=['POST'])
-def set_image_interval():
-    global image_auto_advance_interval_seconds, is_playing, current_media_index, media_playlist, image_advance_timer
-    data = request.get_json()
-    if data and 'interval' in data:
-        try:
-            interval = int(data['interval'])
-            if interval >= 0:
-                old_interval = image_auto_advance_interval_seconds
-                image_auto_advance_interval_seconds = interval
-                logger.info(f"Image auto-advance interval changed from {old_interval}s to {image_auto_advance_interval_seconds}s.")
-                
-                cancel_image_advance_timer()
-
-                if is_playing and \
-                   0 <= current_media_index < len(media_playlist) and \
-                   is_image_file(media_playlist[current_media_index]) and \
-                   image_auto_advance_interval_seconds > 0:
-                    
-                    current_playing_image = media_playlist[current_media_index]
-                    image_advance_timer = threading.Timer(image_auto_advance_interval_seconds, trigger_auto_next, args=[current_playing_image])
-                    image_advance_timer.start()
-                    logger.info(f"Restarted image advance timer for currently playing image {current_playing_image} with new interval {image_auto_advance_interval_seconds}s.")
-
-                return jsonify({"status": "success", "image_auto_advance_interval_seconds": image_auto_advance_interval_seconds})
-            else:
-                return jsonify({"error": "Interval must be a non-negative integer."}), 400
-        except ValueError:
-            return jsonify({"error": "Invalid interval format. Must be an integer."}), 400
-    return jsonify({"error": "Interval missing in request."}), 400
 
 @app.route('/api/control/play', methods=['POST'])
 def control_play():
-    global current_media_index, is_playing, media_playlist, image_advance_timer
+    global current_media_index, is_playing, media_playlist
     
-    cancel_image_advance_timer()
-
     data = request.get_json(silent=True) or {}
     target_filename = data.get('filename')
 
@@ -287,13 +218,8 @@ def control_play():
         if mpv.play():
             is_playing = True
             logger.info(f"Playback started for: {file_to_play}")
-
-            if is_image_file(file_to_play) and image_auto_advance_interval_seconds > 0:
-                image_advance_timer = threading.Timer(image_auto_advance_interval_seconds, trigger_auto_next, args=[file_to_play])
-                image_advance_timer.start()
-                logger.info(f"Started image advance timer for {file_to_play} ({image_auto_advance_interval_seconds}s).")
             
-            return jsonify({"status": "playing", "currentFile": file_to_play, "currentIndex": current_media_index, "image_auto_advance_interval_seconds": image_auto_advance_interval_seconds})
+            return jsonify({"status": "playing", "currentFile": file_to_play, "currentIndex": current_media_index})
         else:
             is_playing = False
             logger.error(f"MPV loaded file {file_to_play} but failed to ensure playback state.")
@@ -318,7 +244,7 @@ def control_pause():
 
 @app.route('/api/control/toggle_pause', methods=['POST'])
 def control_toggle_pause():
-    global is_playing, current_media_index, media_playlist, image_advance_timer
+    global is_playing, current_media_index, media_playlist
     
     was_playing = is_playing 
 
@@ -329,24 +255,7 @@ def control_toggle_pause():
 
         logger.info(f"Toggle pause successful. MPV reports playing: {is_playing}, file: {current_file_from_mpv}")
 
-        if is_playing:
-            if 0 <= current_media_index < len(media_playlist) and \
-               is_image_file(media_playlist[current_media_index]) and \
-               image_auto_advance_interval_seconds > 0:
-                
-                cancel_image_advance_timer()
-                current_image_file = media_playlist[current_media_index]
-                image_advance_timer = threading.Timer(image_auto_advance_interval_seconds, trigger_auto_next, args=[current_image_file])
-                image_advance_timer.start()
-                logger.info(f"Unpaused: Started/Restarted image advance timer for {current_image_file} ({image_auto_advance_interval_seconds}s).")
-        else:
-            if 0 <= current_media_index < len(media_playlist) and \
-               is_image_file(media_playlist[current_media_index]) and \
-               image_advance_timer and getattr(image_advance_timer, 'args', [None])[0] == media_playlist[current_media_index]:
-                cancel_image_advance_timer()
-                logger.info(f"Paused: Cancelled image advance timer for {media_playlist[current_media_index]}.")
-
-        return jsonify({"status": "toggled", "isPlaying": is_playing, "currentFile": current_file_from_mpv, "image_auto_advance_interval_seconds": image_auto_advance_interval_seconds})
+        return jsonify({"status": "toggled", "isPlaying": is_playing, "currentFile": current_file_from_mpv})
     else:
         logger.warning("Failed to send toggle_pause command to MPV.")
         if not mpv.get_playback_status().get('is_mpv_running'):
@@ -356,7 +265,6 @@ def control_toggle_pause():
 @app.route('/api/control/stop', methods=['POST'])
 def control_stop():
     global is_playing, current_media_index
-    cancel_image_advance_timer()
     if mpv.stop():
         is_playing = False
         current_media_index = -1
@@ -369,9 +277,7 @@ def control_stop():
         return jsonify({"error": "Failed to stop playback."}), 500
 
 def _play_next_or_prev(direction):
-    global current_media_index, is_playing, media_playlist, loop_playlist, image_advance_timer
-
-    cancel_image_advance_timer()
+    global current_media_index, is_playing, media_playlist, loop_playlist
 
     # Check if we're in a background thread (timer context)
     is_background = False
@@ -433,10 +339,6 @@ def _play_next_or_prev(direction):
         if mpv.play():
             is_playing = True
             logger.info(f"Successfully loaded and started {file_to_play} for {direction}.")
-            if is_image_file(file_to_play) and image_auto_advance_interval_seconds > 0:
-                image_advance_timer = threading.Timer(image_auto_advance_interval_seconds, trigger_auto_next, args=[file_to_play])
-                image_advance_timer.start()
-                logger.info(f"Started image advance timer for {file_to_play} ({image_auto_advance_interval_seconds}s) after {direction}.")
             if is_background:
                 # Return None instead of a response when called from background
                 return None
@@ -529,7 +431,7 @@ def loop_current_file():
 
 @app.route('/api/playlist/delete', methods=['POST'])
 def delete_file_from_playlist():
-    global media_playlist, current_media_index, is_playing, image_advance_timer
+    global media_playlist, current_media_index, is_playing
     data = request.get_json()
     if not data or 'filename' not in data:
         return jsonify({"error": "Filename missing in request."}), 400
@@ -555,12 +457,6 @@ def delete_file_from_playlist():
         current_media_index = -1
     elif current_media_index > idx:
         current_media_index -= 1
-
-    if image_advance_timer and image_advance_timer.is_alive() and \
-       hasattr(image_advance_timer, 'args') and image_advance_timer.args and \
-       image_advance_timer.args[0] == filename:
-        cancel_image_advance_timer()
-        logger.debug(f"Cancelled image timer because the timed file {filename} is being deleted.")
 
     save_playlist_to_file()
     logger.info(f"Deleted '{filename}' from playlist.")
