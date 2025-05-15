@@ -529,62 +529,42 @@ def set_next_track():
     except ValueError:
         return jsonify({"error": "File somehow not in playlist after check (race condition?)"}), 500
 
-    if not is_playing or not (0 <= current_media_index < len(media_playlist)):
-        # If not playing, or index is weird, just make the target file the current one and try to play
-        current_media_index = target_idx_in_playlist 
-        # No save_playlist_to_file() here, order doesn't change yet
-        # Construct a new play request essentially
-        if current_loop_mode == 'playlist':
-            logger.info(f"Set_next (not playing): loading MPV playlist, starting at {filename_to_set_next}")
-            mpv.load_playlist(media_playlist, current_media_index)
-            mpv.play()
-        else:
-            logger.info(f"Set_next (not playing): loading file {filename_to_set_next}")
-            mpv.load_file(filename_to_set_next)
-            mpv.play()
-        is_playing = True # Assume play works
-        return jsonify(get_playlist_data_for_response()) # Return full updated status
+    # Move the file to the next slot after the current one, do not start playback or change current track
+    if not (0 <= current_media_index < len(media_playlist)):
+        # If nothing is playing, move the file to the start (after index -1, i.e., at 0)
+        new_pos = 0
     else:
-        # Player is active, reorder Flask's playlist and then reload MPV's playlist if in 'playlist' mode
-        logger.info(f"Setting '{filename_to_set_next}' to play after '{media_playlist[current_media_index]}'.")
-        
-        # Reorder Flask's media_playlist
-        item_to_move = media_playlist.pop(target_idx_in_playlist)
         new_pos = current_media_index + 1
-        media_playlist.insert(new_pos, item_to_move)
-        save_playlist_to_file()
-        logger.info(f"Flask playlist reordered. New playlist: {media_playlist}")
+    if target_idx_in_playlist == new_pos or target_idx_in_playlist == new_pos - 1:
+        # Already in the correct position, nothing to do
+        return jsonify({"status": "already_next", "playlist": media_playlist, "currentIndex": current_media_index })
+    item_to_move = media_playlist.pop(target_idx_in_playlist)
+    # Adjust new_pos if the item was before the insertion point
+    if target_idx_in_playlist < new_pos:
+        new_pos -= 1
+    media_playlist.insert(new_pos, item_to_move)
+    save_playlist_to_file()
+    logger.info(f"Moved '{filename_to_set_next}' to position {new_pos} (next in playlist). New playlist: {media_playlist}")
 
-        if current_loop_mode == 'playlist':
-            # Reload MPV's playlist with the new order, maintaining current playback if possible.
-            # This is tricky. A simpler approach for MPV is to just reload and set index.
-            # MPV's playlist-pos is based on its *current* internal playlist.
-            # We need to find the new index of the *currently playing file* in the *newly ordered* flask playlist.
-            current_playing_file_in_flask = media_playlist[current_media_index] # This index is from BEFORE reordering the item_to_move
-            try:
-                # The file that was at current_media_index might have shifted if item_to_move was before it.
-                # Let's find the true current playing file from MPV to be safe.
-                mpv_path_resp = mpv._execute_command_and_get_response(["get_property", "path"])
-                actual_mpv_playing_file = None
-                if mpv_path_resp and mpv_path_resp.get("data") is not None:
-                    actual_mpv_playing_file = os.path.basename(mpv_path_resp["data"])
-                
-                if actual_mpv_playing_file:
-                    new_playing_index = media_playlist.index(actual_mpv_playing_file)
-                else: # Fallback if we can't get MPV's current file
-                    new_playing_index = current_media_index if media_playlist[current_media_index] == current_playing_file_in_flask else media_playlist.index(current_playing_file_in_flask)
+    if current_loop_mode == 'playlist':
+        # Reload MPV's playlist to update the order, but keep the current track
+        mpv_path_resp = mpv._execute_command_and_get_response(["get_property", "path"])
+        actual_mpv_playing_file = None
+        if mpv_path_resp and mpv_path_resp.get("data") is not None:
+            actual_mpv_playing_file = os.path.basename(mpv_path_resp["data"])
+        try:
+            if actual_mpv_playing_file:
+                new_playing_index = media_playlist.index(actual_mpv_playing_file)
+            else:
+                new_playing_index = current_media_index if 0 <= current_media_index < len(media_playlist) else 0
+            mpv.load_playlist(media_playlist, new_playing_index)
+            current_media_index = new_playing_index
+        except ValueError:
+            logger.error("Error finding currently playing file in reordered playlist. Reloading playlist from start.")
+            mpv.load_playlist(media_playlist, 0)
+            current_media_index = 0
 
-                logger.info(f"Reloading MPV playlist. Will try to continue from: {media_playlist[new_playing_index]} at new index {new_playing_index}")
-                mpv.load_playlist(media_playlist, new_playing_index) 
-                # mpv.play() # MPV should continue if it was already playing and playlist-pos is set
-                current_media_index = new_playing_index # Update Flask's index
-
-            except ValueError:
-                logger.error("Error finding currently playing file in reordered playlist. Reloading playlist from start.")
-                mpv.load_playlist(media_playlist, 0)
-                current_media_index = 0
-        
-        return jsonify({"status": "next_item_set", "nextFile": filename_to_set_next, "playlist": media_playlist, "currentIndex": current_media_index })
+    return jsonify({"status": "next_item_set", "nextFile": filename_to_set_next, "playlist": media_playlist, "currentIndex": current_media_index })
 
 @app.route('/api/settings/loop', methods=['POST'])
 def set_loop():

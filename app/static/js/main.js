@@ -229,6 +229,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loopModeSelect.addEventListener('change', async () => {
         const mode = loopModeSelect.value;
+        // First, restart MPV process
+        uploadStatus.textContent = 'Restarting MPV process for mode change...';
+        uploadStatus.className = '';
+        const restartResp = await fetchAPI('/mpv/restart', 'POST');
+        if (!restartResp || restartResp.status !== 'mpv_restarted') {
+            uploadStatus.textContent = restartResp?.error || 'Failed to restart MPV for mode change.';
+            uploadStatus.className = 'error-message';
+            return;
+        }
+        // Wait a moment to ensure MPV is up
+        await new Promise(res => setTimeout(res, 700));
+        // Now set the loop mode
         const response = await fetchAPI('/settings/loop_mode', 'POST', { mode: mode });
         if (response && response.loop_mode === mode) {
             uploadStatus.textContent = `Loop mode set to: ${mode}`;
