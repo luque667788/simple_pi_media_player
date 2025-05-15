@@ -388,13 +388,45 @@ class MPVController:
             elif mode == 'file':
                 self._send_command(["set_property", "loop-file", "inf"])
                 self._send_command(["set_property", "loop-playlist", "no"])
-            elif mode == 'playlist':
+                logger.info("MPV loop mode set to 'file'.")
+                return True
+            elif mode == 'playlist': # Flask app will handle advancing
                 self._send_command(["set_property", "loop-file", "no"])
-                self._send_command(["set_property", "loop-playlist", "inf"])
-            return True
+                self._send_command(["set_property", "loop-playlist", "no"]) # Ensure MPV doesn't loop its (likely single-item) playlist
+                logger.info("MPV loop mode set for 'playlist' (Flask handles advance): loop-file=no, loop-playlist=no.")
+                return True
+            return False
         except Exception as e:
             logger.error(f"Failed to set loop mode {mode}: {e}")
             return False
+
+    def toggle_loop_file(self):
+        """Toggle loop mode for the current file"""
+        if self._send_command(["cycle", "loop-file"]):
+            # Query the actual loop-file state after toggling
+            loop_file_response = self._execute_command_and_get_response(["get_property", "loop-file"])
+            if loop_file_response and "data" in loop_file_response:
+                is_looping_file = loop_file_response["data"] != "no"
+                logger.info(f"Toggled loop-file. Actual state from MPV: {'looping' if is_looping_file else 'not looping'}")
+                return True
+            else:
+                logger.warning("Toggled loop-file, but could not determine actual state from MPV.")
+                return True # Assume success
+        return False
+
+    def toggle_loop_playlist(self):
+        """Toggle loop mode for the playlist"""
+        if self._send_command(["cycle", "loop-playlist"]):
+            # Query the actual loop-playlist state after toggling
+            loop_playlist_response = self._execute_command_and_get_response(["get_property", "loop-playlist"])
+            if loop_playlist_response and "data" in loop_playlist_response:
+                is_looping_playlist = loop_playlist_response["data"] != "no"
+                logger.info(f"Toggled loop-playlist. Actual state from MPV: {'looping' if is_looping_playlist else 'not looping'}")
+                return True
+            else:
+                logger.warning("Toggled loop-playlist, but could not determine actual state from MPV.")
+                return True # Assume success
+        return False
 
     # Example usage (for testing this module directly):
 if __name__ == '__main__':
