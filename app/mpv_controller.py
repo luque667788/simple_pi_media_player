@@ -136,7 +136,9 @@ class MPVController:
             '--idle=yes', # Keep MPV open and responsive
             '--keep-open=no', # IMPORTANT: When a file ends, stop and report EOF, don't keep last frame.
             '--log-file=' + MPV_LOG_PATH,
-            '--msg-level=all=info' # MPV log level
+            '--msg-level=all=info', # MPV log level
+            '--vo=fbdev',
+            '--fbdev=/dev/fb0'
         ]
 
         try:
