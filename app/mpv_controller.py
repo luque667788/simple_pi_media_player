@@ -129,11 +129,12 @@ class MPVController:
         cmd = [
             'mpv',
             '--no-osc', '--no-osd-bar', '--no-border', '--ontop',
-            '--really-quiet', # MPV's own stdout/stderr suppression
+            '--really-quiet', # MPV\'s own stdout/stderr suppression
             '--autofit=240x320', '--geometry=240x320+0+0',
             '--force-window=immediate',
             '--input-ipc-server=' + MPV_SOCKET_PATH,
-            '--idle=yes',
+            '--idle=yes', # Keep MPV open and responsive
+            '--keep-open=no', # IMPORTANT: When a file ends, stop and report EOF, don't keep last frame.
             '--log-file=' + MPV_LOG_PATH,
             '--msg-level=all=info' # MPV log level
         ]
@@ -162,10 +163,57 @@ class MPVController:
             self.process = None
             return False
 
-    def load_file(self, filepath, transition="fade"):
+    def load_playlist(self, playlist_files, start_index=0):
+        """Loads a list of files into MPV's internal playlist and sets the starting position."""
+        if not self.process or self.process.poll() is not None:
+            logger.warning("MPV not running, attempting to start it before loading playlist.")
+            if not self.start_player():
+                logger.error("Failed to start MPV, cannot load playlist.")
+                return False
+        
+        if not playlist_files:
+            logger.warning("load_playlist called with an empty list of files.")
+            self._send_command(["stop"]) # Stop any current playback
+            self._send_command(["playlist-clear"]) # Clear MPV's playlist
+            self.current_file = None
+            self.is_playing_media = False
+            return True # Successfully cleared playlist
+
+        logger.info(f"Loading playlist into MPV: {playlist_files} starting at index {start_index}")
+
+        self._send_command(["playlist-clear"])
+        # logger.debug("Sent playlist-clear to MPV.")
+
+        for filename in playlist_files:
+            full_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', filename)
+            if os.path.exists(full_path):
+                # Use 'append' to add to MPV's playlist without starting playback immediately
+                self._send_command(["loadfile", full_path, "append"])
+                # logger.debug(f"Appended {filename} to MPV playlist.")
+            else:
+                logger.warning(f"File {filename} not found at {full_path}, skipping in MPV playlist load.")
+        
+        # Set the starting position in MPV's playlist (0-indexed)
+        if 0 <= start_index < len(playlist_files):
+            self._send_command(["set_property", "playlist-pos", start_index])
+            # logger.debug(f"Set MPV playlist-pos to {start_index}.")
+            self.current_file = playlist_files[start_index] # Anticipate current file
+        else:
+            logger.warning(f"Invalid start_index {start_index} for playlist of length {len(playlist_files)}. Defaulting to 0.")
+            self._send_command(["set_property", "playlist-pos", 0])
+            if playlist_files: # Check if playlist_files is not empty
+                self.current_file = playlist_files[0]
+            else:
+                self.current_file = None # Should not happen if playlist_files is checked above
+
+        # self.is_playing_media = False # Playback is initiated by a separate play command
+        logger.info(f"MPV playlist loaded. Current anticipated file: {self.current_file}")
+        return True
+
+    def load_file(self, filepath, transition="fade"): # Transition currently not used
         if not self.process or self.process.poll() is not None:
             logger.warning("MPV not running, attempting to start it before loading file.")
-            if not self.start_player():
+            if not self.start_player(): # This will now also set keep-open=no
                 logger.error("Failed to start MPV, cannot load file.")
                 return False
         
@@ -176,41 +224,12 @@ class MPVController:
 
         logger.info(f"Loading file: {full_path} with transition: {transition}")
         
-        # Enable observing EOF events (ensuring auto-advance works)
-        self._send_command(["set_property", "keep-open", "no"])
-        
-        # Universal fade transition using window alpha
-        if transition == "fade" and self.is_playing_media:
-            # Fade out current media
-            for i in range(10, 0, -1):  # 10 steps fade-out
-                opacity = i / 10.0
-                self._send_command(["set_property", "alpha", str(opacity)])
-                time.sleep(0.05)
-
-            # Load new file
-            if not self._send_command(["loadfile", full_path, "replace"]):
-                logger.error(f"Failed to send loadfile command for {filepath}.")
-                return False
-
-            # Update state
+        # Simplified: Just load and replace. Transitions can be added back later.
+        if self._send_command(["loadfile", full_path, "replace"]):
             self.current_file = filepath
-            self.is_playing_media = True
-
-            # Fade in new media
-            for i in range(1, 11):  # 10 steps fade-in
-                opacity = i / 10.0
-                self._send_command(["set_property", "alpha", str(opacity)])
-                time.sleep(0.05)
-
-            logger.info(f"File {filepath} loaded into MPV with smooth fade transition.")
+            # self.is_playing_media = False # Playback is initiated by a separate play command
+            logger.info(f"File {filepath} loaded into MPV (replace).")
             return True
-        else:
-            # No transition or MPV wasn't playing, just load directly
-            if self._send_command(["loadfile", full_path, "replace"]):
-                self.current_file = filepath
-                self.is_playing_media = True
-                logger.info(f"File {filepath} loaded into MPV.")
-                return True
         
         logger.error(f"Failed to send loadfile command for {filepath}.")
         return False
@@ -262,19 +281,19 @@ class MPVController:
     # Playlist commands are for MPV's internal playlist, which we might not use directly
     # if Flask manages the queue. If Flask tells MPV to play files one-by-one, these are less relevant.
     def playlist_next(self):
-        if self._send_command(["playlist-next", "weak"]): # weak: stop if at end
-            # Need to update self.current_file by querying MPV, which is complex.
-            # For now, assume Flask will manage current file knowledge.
-            logger.info("Sent playlist-next command.")
-            self.is_playing_media = True # Assuming it plays something or stops
+        if self._send_command(["playlist-next", "weak"]): # weak: stop if at end and not looping
+            logger.info("Sent playlist-next command to MPV.")
+            # self.is_playing_media = True # State will be updated by get_playback_status
             return True
+        logger.warning("Failed to send playlist-next command to MPV.")
         return False
 
     def playlist_prev(self):
-        if self._send_command(["playlist-prev", "weak"]): # weak: stop if at beginning
-            logger.info("Sent playlist-prev command.")
-            self.is_playing_media = True
+        if self._send_command(["playlist-prev", "weak"]): # weak: stop if at beginning and not looping
+            logger.info("Sent playlist-prev command to MPV.")
+            # self.is_playing_media = True # State will be updated by get_playback_status
             return True
+        logger.warning("Failed to send playlist-prev command to MPV.")
         return False
 
     def terminate_player(self):
@@ -376,26 +395,31 @@ class MPVController:
         return loop_status
 
     def set_loop_mode(self, mode):
-        """Set loop mode
-
+        """Set loop mode for MPV.
+           Uses MPV's internal playlist features when mode is 'playlist'.
         Args:
             mode (str): One of 'none', 'file', or 'playlist'
         """
         try:
-            if mode == 'none':
+            if mode == 'none': # Stop at end of file (if single) or end of playlist (if MPV playlist was loaded)
                 self._send_command(["set_property", "loop-file", "no"])
                 self._send_command(["set_property", "loop-playlist", "no"])
-            elif mode == 'file':
+                self._send_command(["set_property", "keep-open", "no"]) 
+                logger.info("MPV loop mode set for 'none': loop-file=no, loop-playlist=no, keep-open=no.")
+            elif mode == 'file': # Loop the current file indefinitely
                 self._send_command(["set_property", "loop-file", "inf"])
-                self._send_command(["set_property", "loop-playlist", "no"])
-                logger.info("MPV loop mode set to 'file'.")
-                return True
-            elif mode == 'playlist': # Flask app will handle advancing
-                self._send_command(["set_property", "loop-file", "no"])
-                self._send_command(["set_property", "loop-playlist", "no"]) # Ensure MPV doesn't loop its (likely single-item) playlist
-                logger.info("MPV loop mode set for 'playlist' (Flask handles advance): loop-file=no, loop-playlist=no.")
-                return True
-            return False
+                self._send_command(["set_property", "loop-playlist", "no"]) # Ensure MPV doesn't advance its own playlist
+                self._send_command(["set_property", "keep-open", "yes"]) 
+                logger.info("MPV loop mode set for 'file': loop-file=inf, loop-playlist=no, keep-open=yes.")
+            elif mode == 'playlist': # MPV handles playlist looping and advancement
+                self._send_command(["set_property", "loop-file", "no"]) # Individual files should not loop
+                self._send_command(["set_property", "loop-playlist", "inf"]) # Loop the entire MPV playlist
+                self._send_command(["set_property", "keep-open", "no"]) # When a file in playlist ends, MPV goes to next
+                logger.info("MPV loop mode set for 'playlist': loop-file=no, loop-playlist=inf, keep-open=no.")
+            else:
+                logger.warning(f"Unknown loop mode: {mode}")
+                return False
+            return True
         except Exception as e:
             logger.error(f"Failed to set loop mode {mode}: {e}")
             return False
@@ -433,75 +457,54 @@ if __name__ == '__main__':
     # Setup basic logging for standalone testing
     logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] [%(levelname)s] [%(module)s] %(message)s')
     
-    # Create a dummy uploads folder and a test file for standalone execution
+    # Use a test video file from uploads directory
     test_upload_dir = os.path.join(PROJECT_ROOT, 'app', 'uploads')
     os.makedirs(test_upload_dir, exist_ok=True)
-    dummy_file_name = "test_image.png"
-    dummy_file_path = os.path.join(test_upload_dir, dummy_file_name)
+    # Pick the first .mp4 file found in uploads for testing
+    test_video_file = None
+    for f in os.listdir(test_upload_dir):
+        if f.lower().endswith('.mp4'):
+            test_video_file = f
+            break
     
-    # Create a small dummy PNG if it doesn't exist (requires Pillow or similar, or use a known existing image)
-    # For simplicity, let's assume a file exists or MPV handles missing file gracefully for test.
-    # You can manually place an image like 'test_image.png' in app/uploads for this test.
-    if not os.path.exists(dummy_file_path):
+    if not test_video_file:
+        logger.error("No .mp4 video file found in app/uploads for testing. Please add a test video.")
+    else:
+        controller = MPVController()
         try:
-            from PIL import Image
-            img = Image.new('RGB', (60, 30), color = 'red')
-            img.save(dummy_file_path)
-            logger.info(f"Created dummy file: {dummy_file_path}")
-        except ImportError:
-            logger.warning("Pillow not installed. Cannot create dummy image. Please place a test image at app/uploads/test_image.png")
-            # exit() # Or continue without it if MPV handles it
+            logger.info("--- Test: Starting MPV Player ---")
+            if controller.start_player():
+                logger.info("MPV Player started in idle mode.")
+                time.sleep(2)
 
-    controller = MPVController()
-    try:
-        logger.info("--- Test: Starting MPV Player ---")
-        if controller.start_player():
-            logger.info("MPV Player started in idle mode.")
-            time.sleep(2)
-
-            if os.path.exists(dummy_file_path):
-                logger.info(f"--- Test: Loading and Playing '{dummy_file_name}' ---")
-                controller.load_file(dummy_file_name)
+                logger.info(f"--- Test: Loading and Playing '{test_video_file}' ---")
+                controller.load_file(test_video_file)
                 time.sleep(1) # Give time for loadfile to process
                 controller.play() # Explicitly tell it to play if it was paused or just loaded
-                logger.info(f"Playing '{dummy_file_name}'. Should be visible for ~5 seconds.")
-                time.sleep(6) # Image display duration + buffer
+                logger.info(f"Playing '{test_video_file}'. Should be visible for ~5 seconds.")
+                time.sleep(6) # Video display duration + buffer
+
+                logger.info("--- Test: Pausing Playback ---")
+                controller.pause()
+                logger.info("Playback paused. Should remain on last frame.")
+                time.sleep(3)
+
+                logger.info("--- Test: Resuming Playback (or re-playing if video duration passed) ---")
+                controller.play()
+                logger.info("Playback resumed.")
+                time.sleep(3)
+
+                logger.info("--- Test: Stopping Playback (Black Screen) ---")
+                controller.stop()
+                logger.info("Playback stopped. MPV idle (black screen). Wait 3s.")
+                time.sleep(3)
             else:
-                logger.warning(f"Skipping load file test as '{dummy_file_path}' does not exist.")
+                logger.error("MPV Player failed to start. Aborting tests.")
 
-            logger.info("--- Test: Pausing Playback ---")
-            controller.pause()
-            logger.info("Playback paused. Should remain on last frame.")
-            time.sleep(3)
-
-            logger.info("--- Test: Resuming Playback (or re-playing if image duration passed) ---")
-            controller.play()
-            logger.info("Playback resumed.")
-            time.sleep(3)
-
-            logger.info("--- Test: Stopping Playback (Black Screen) ---")
-            controller.stop()
-            logger.info("Playback stopped. MPV idle (black screen). Wait 3s.")
-            time.sleep(3)
-            
-            # Test loading another file if available, or re-load
-            if os.path.exists(dummy_file_path):
-                logger.info(f"--- Test: Re-loading '{dummy_file_name}' ---")
-                controller.load_file(dummy_file_name)
-                time.sleep(6)
-            
-        else:
-            logger.error("MPV Player failed to start. Aborting tests.")
-
-    except Exception as e:
-        logger.error(f"An error occurred during testing: {e}", exc_info=True)
-    finally:
-        logger.info("--- Test: Terminating MPV Player ---")
-        controller.terminate_player()
-        logger.info("MPV Player terminated.")
-
-        # Clean up dummy file if created by this script
-        # if os.path.exists(dummy_file_path) and 'img' in locals(): # Check if we created it
-        #     os.remove(dummy_file_path)
-        #     logger.info(f"Removed dummy file: {dummy_file_path}")
+        except Exception as e:
+            logger.error(f"An error occurred during testing: {e}", exc_info=True)
+        finally:
+            logger.info("--- Test: Terminating MPV Player ---")
+            controller.terminate_player()
+            logger.info("MPV Player terminated.")
 
