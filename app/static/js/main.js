@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- UI Update Functions ---
-    function updatePlaylistUI(playlist = [], currentFile = null) {
+    function updatePlaylistUI(playlist = [], currentFile = null, loop_mode = 'none') {
         playlistUl.innerHTML = '';
         if (!Array.isArray(playlist)) {
             console.error("Playlist data is not an array:", playlist);
@@ -81,6 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 setNextTrack(item);
             });
+            // Show/hide Play Next button based on loop_mode
+            if (loop_mode === 'playlist') {
+                nextButton.style.display = '';
+            } else {
+                nextButton.style.display = 'none';
+            }
 
             // Add delete button
             const deleteButton = document.createElement('button');
@@ -121,9 +127,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.loop_mode) {
             loopModeSelect.value = data.loop_mode;
         }
-        
         mpvProcessStatusSpan.textContent = data.mpv_is_running ? "Running" : "Not Running/Error";
-        updatePlaylistUI(data.playlist, data.currentFile);
+        // Update playlist UI, passing loop_mode
+        updatePlaylistUI(data.playlist, data.currentFile, data.loop_mode);
+        // Show/hide global next/prev buttons based on loop_mode
+        if (data.loop_mode === 'playlist') {
+            prevButton.style.display = '';
+            nextButton.style.display = '';
+        } else {
+            prevButton.style.display = 'none';
+            nextButton.style.display = 'none';
+        }
     }
 
     // --- Event Handlers & API Calls ---
@@ -216,11 +230,13 @@ document.addEventListener('DOMContentLoaded', () => {
     loopModeSelect.addEventListener('change', async () => {
         const mode = loopModeSelect.value;
         const response = await fetchAPI('/settings/loop_mode', 'POST', { mode: mode });
-        if (response && response.status === "success") {
+        if (response && response.loop_mode === mode) {
             uploadStatus.textContent = `Loop mode set to: ${mode}`;
             uploadStatus.className = 'success-message';
+            updateStatusUI(response); // Optionally update UI with new status
         } else {
-            uploadStatus.textContent = response?.error || 'Failed to set loop mode';
+            console.log('Failed to set loop mode:', response);
+            uploadStatus.textContent = response?.error || 'Failed to set loop mode (and no error message).';
             uploadStatus.className = 'error-message';
         }
     });

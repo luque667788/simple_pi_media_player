@@ -598,7 +598,7 @@ def set_loop():
 
 @app.route('/api/settings/loop_mode', methods=['POST'])
 def set_loop_mode():
-    global current_loop_mode, loop_playlist
+    global current_loop_mode, loop_playlist, media_playlist, current_media_index, is_playing
     data = request.get_json()
     if not data or 'mode' not in data:
         return jsonify({"error": "Mode missing in request"}), 400
@@ -607,10 +607,23 @@ def set_loop_mode():
     if mode not in ['none', 'file', 'playlist']:
         return jsonify({"error": "Invalid mode. Use 'none', 'file', or 'playlist'"}), 400
         
-    if mpv.set_loop_mode(mode):
+    mpv_args = {}
+    if mode == 'playlist':
+        mpv_args['playlist_files'] = media_playlist
+        valid_index = current_media_index if 0 <= current_media_index < len(media_playlist) else 0
+        mpv_args['current_index_in_playlist'] = valid_index
+    was_playing = is_playing
+    if mpv.set_loop_mode(mode, **mpv_args):
         current_loop_mode = mode
-        loop_playlist = (mode == 'playlist')  # enable playlist looping when selected
-        return jsonify({"status": "success", "loop_mode": mode})
+        loop_playlist = (mode == 'playlist')
+        if was_playing:
+            logger.info("Resuming/confirming playback after mode switch.")
+            mpv.play()
+            is_playing = True
+        else:
+            is_playing = False
+        logger.info(f"Loop mode set to {current_loop_mode} via API.")
+        return jsonify(get_playlist_data_for_response())
     return jsonify({"error": "Failed to set loop mode"}), 500
 
 @app.route('/api/control/loop_file', methods=['POST'])

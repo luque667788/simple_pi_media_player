@@ -394,28 +394,33 @@ class MPVController:
             
         return loop_status
 
-    def set_loop_mode(self, mode):
+    def set_loop_mode(self, mode, playlist_files=None, current_index_in_playlist=None):
         """Set loop mode for MPV.
            Uses MPV's internal playlist features when mode is 'playlist'.
         Args:
             mode (str): One of 'none', 'file', or 'playlist'
+            playlist_files (list, optional): List of filenames for playlist mode.
+            current_index_in_playlist (int, optional): Start index for playlist mode.
         """
         try:
-            if mode == 'none': # Stop at end of file (if single) or end of playlist (if MPV playlist was loaded)
+            if mode == 'none':
                 self._send_command(["set_property", "loop-file", "no"])
                 self._send_command(["set_property", "loop-playlist", "no"])
-                self._send_command(["set_property", "keep-open", "no"]) 
+                self._send_command(["set_property", "keep-open", "no"])
                 logger.info("MPV loop mode set for 'none': loop-file=no, loop-playlist=no, keep-open=no.")
-            elif mode == 'file': # Loop the current file indefinitely
+            elif mode == 'file':
                 self._send_command(["set_property", "loop-file", "inf"])
-                self._send_command(["set_property", "loop-playlist", "no"]) # Ensure MPV doesn't advance its own playlist
-                self._send_command(["set_property", "keep-open", "yes"]) 
+                self._send_command(["set_property", "loop-playlist", "no"])
+                self._send_command(["set_property", "keep-open", "yes"])
                 logger.info("MPV loop mode set for 'file': loop-file=inf, loop-playlist=no, keep-open=yes.")
-            elif mode == 'playlist': # MPV handles playlist looping and advancement
-                self._send_command(["set_property", "loop-file", "no"]) # Individual files should not loop
-                self._send_command(["set_property", "loop-playlist", "inf"]) # Loop the entire MPV playlist
-                self._send_command(["set_property", "keep-open", "no"]) # When a file in playlist ends, MPV goes to next
+            elif mode == 'playlist':
+                self._send_command(["set_property", "loop-file", "no"])
+                self._send_command(["set_property", "loop-playlist", "inf"])
+                self._send_command(["set_property", "keep-open", "no"])
                 logger.info("MPV loop mode set for 'playlist': loop-file=no, loop-playlist=inf, keep-open=no.")
+                if playlist_files is not None and current_index_in_playlist is not None:
+                    logger.info(f"Reloading MPV's playlist due to mode switch to 'playlist'. Start index: {current_index_in_playlist}")
+                    self.load_playlist(playlist_files, current_index_in_playlist)
             else:
                 logger.warning(f"Unknown loop mode: {mode}")
                 return False
