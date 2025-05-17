@@ -72,6 +72,66 @@ load_playlist_from_file()
 # --- MPlayer Controller Instance ---
 mpv = MPlayerController() # Initialize the controller with MPlayer instead of MPV
 
+# --- Playlist Synchronization Function ---
+def synchronize_playlist_with_uploads():
+    """
+    Scans the UPLOAD_FOLDER for media files and updates media_playlist
+    and playlist.json to match.
+    """
+    global media_playlist
+    logger.info("Synchronizing playlist with files in upload folder...")
+    
+    if not os.path.exists(UPLOAD_FOLDER):
+        logger.warning(f"Upload folder {UPLOAD_FOLDER} does not exist. Cannot synchronize.")
+        # If playlist.json had entries but folder is gone, clear the playlist
+        if media_playlist:
+            logger.info("Clearing in-memory playlist as upload folder is missing.")
+            media_playlist = []
+            save_playlist_to_file()
+        return
+
+    try:
+        # Ensure ALLOWED_EXTENSIONS are lowercase for comparison
+        allowed_ext_lower = {ext.lower() for ext in ALLOWED_EXTENSIONS}
+        actual_files_in_uploads = {
+            f for f in os.listdir(UPLOAD_FOLDER) 
+            if os.path.isfile(os.path.join(UPLOAD_FOLDER, f)) and \
+               f.rsplit('.', 1)[-1].lower() in allowed_ext_lower
+        }
+        logger.debug(f"Files found in uploads folder: {actual_files_in_uploads}")
+        
+        # Ensure media_playlist contains only filenames, not full paths, for comparison
+        # This should already be the case if load_playlist_from_file and uploads are consistent
+        playlist_files_set = set(media_playlist)
+        
+        files_to_add = actual_files_in_uploads - playlist_files_set
+        files_to_remove = playlist_files_set - actual_files_in_uploads
+        
+        made_changes = False
+        
+        if files_to_add:
+            # Add while trying to maintain some order, e.g., sort them
+            for f_add in sorted(list(files_to_add)): # Sort for consistent ordering
+                media_playlist.append(f_add) 
+            logger.info(f"Added to playlist (found in uploads but not in playlist.json): {sorted(list(files_to_add))}")
+            made_changes = True
+            
+        if files_to_remove:
+            # Create a new list excluding the files to remove, preserving order for the rest
+            new_media_playlist = [f for f in media_playlist if f not in files_to_remove]
+            media_playlist = new_media_playlist
+            logger.info(f"Removed from playlist (in playlist.json but not found in uploads): {sorted(list(files_to_remove))}")
+            made_changes = True
+            
+        if made_changes:
+            logger.info(f"Playlist synchronized. New playlist: {media_playlist}")
+            save_playlist_to_file()
+        else:
+            logger.info("Playlist is already synchronized with the uploads folder.")
+            
+    except Exception as e:
+        logger.error(f"Error synchronizing playlist with uploads folder: {e}")
+
 # --- Utility Functions ---
 def allowed_file(filename):
     return '.' in filename and \
@@ -187,7 +247,7 @@ def get_playlist():
 
 @app.route('/api/control/play', methods=['POST'])
 def control_play():
-    global current_media_index, is_playing, media_playlist
+    global current_media_index, is_playing, media_playlist, current_loop_mode # current_loop_mode is main.py's perspective
     
     data = request.get_json(silent=True) or {}
     target_filename = data.get('filename')
@@ -202,19 +262,33 @@ def control_play():
         else:
             logger.warning(f"Play requested for specific file '{target_filename}' not in playlist.")
             return jsonify({"error": f"File '{target_filename}' not found in playlist."}), 404
-    elif current_media_index == -1 and media_playlist:
+    elif current_media_index == -1 and media_playlist: # If nothing playing or stopped, start from beginning
         current_media_index = 0
-    elif not (0 <= current_media_index < len(media_playlist)) and media_playlist:
+    elif not (0 <= current_media_index < len(media_playlist)) and media_playlist: # If index is somehow invalid
         logger.warning(f"Invalid current_media_index {current_media_index}, resetting to 0.")
         current_media_index = 0
     
     file_to_play = media_playlist[current_media_index]
-    logger.info(f"Play command: Attempting to play '{file_to_play}' at index {current_media_index}")
     
-    # MPlayer doesn't support playlist mode, so always load files directly
-    if mpv.load_file(file_to_play):
+    # Get the loop mode directly from the MPlayerController instance
+    controller_status = mpv.get_playback_status() 
+    actual_controller_loop_mode = controller_status.get('loop_mode')
+
+    logger.info(f"Play command: Attempting to play '{file_to_play}' at index {current_media_index}. Main's current_loop_mode: {current_loop_mode}. Controller's actual_loop_mode: {actual_controller_loop_mode}")
+    
+    playback_started = False
+    if actual_controller_loop_mode == 'playlist': # Use the controller's actual reported loop mode
+        logger.info(f"Initiating playback with playlist mode (based on controller state). Full playlist will be loaded starting at index {current_media_index}.")
+        if mpv.load_playlist(media_playlist, current_media_index):
+            playback_started = True
+    else:
+        logger.info(f"Controller's loop mode is '{actual_controller_loop_mode}', not 'playlist'. Falling back to load_file for '{file_to_play}'.")
+        if mpv.load_file(file_to_play):
+            playback_started = True
+
+    if playback_started:
         is_playing = True
-        logger.info(f"Playback started for: {file_to_play}")
+        logger.info(f"Playback started for: {file_to_play} (or playlist starting with it). Index: {current_media_index}")
         return jsonify({"status": "playing", "currentFile": file_to_play, "currentIndex": current_media_index})
     else:
         is_playing = False
@@ -519,6 +593,9 @@ def restart_mplayer_route():
 def teardown_mpv(exception=None):
     pass
 
+# Synchronize playlist after loading and before starting app
+synchronize_playlist_with_uploads()
+
 import atexit
 def cleanup_on_exit():
     logger.info("Flask application is exiting. Terminating MPlayer.")
@@ -530,7 +607,9 @@ if __name__ == '__main__':
         os.makedirs(UPLOAD_FOLDER)
         logger.info(f"Created upload folder: {UPLOAD_FOLDER} on startup.")
     
-    logger.info(f"Initial playlist: {media_playlist}")
+    # Initial load is done above.
+    # synchronize_playlist_with_uploads() is called after load_playlist_from_file()
+    logger.info(f"Playlist after sync: {media_playlist}")
 
     logger.info("Starting Flask with MPlayer support...")
 

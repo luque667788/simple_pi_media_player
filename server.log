@@ -1,33 +1,428 @@
-[2025-05-17 18:17:18,878] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/kanga2/server.log
-[2025-05-17 18:17:18,878] [INFO] [main] Playlist loaded from /home/luque/Documents/work/fiver/kanga2/playlist.json: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
-[2025-05-17 18:17:18,880] [INFO] [main] Initial playlist: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
-[2025-05-17 18:17:18,881] [INFO] [main] Starting Flask with MPlayer support...
-[2025-05-17 18:17:32,739] [INFO] [main] Serving index.html. Current playlist: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
-[2025-05-17 18:17:34,727] [INFO] [main] Play command: Attempting to play 'Screencast From 2025-02-06 10-33-00.mp4' at index 0
-[2025-05-17 18:17:39,690] [INFO] [main] Serving index.html. Current playlist: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
-[2025-05-17 18:17:52,667] [INFO] [main] Play command: Attempting to play 'Screencast From 2025-02-06 10-33-00.mp4' at index 0
-[2025-05-17 18:18:14,953] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 1
-[2025-05-17 18:18:14,958] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4
-[2025-05-17 18:18:27,803] [INFO] [main] Flask application is exiting. Terminating MPlayer.
-[2025-05-17 18:33:46,497] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/kanga2/server.log
-[2025-05-17 18:33:46,497] [INFO] [main] Playlist loaded from /home/luque/Documents/work/fiver/kanga2/playlist.json: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
-[2025-05-17 18:33:46,502] [INFO] [main] Initial playlist: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
-[2025-05-17 18:33:46,502] [INFO] [main] Starting Flask with MPlayer support...
-[2025-05-17 18:33:54,593] [INFO] [main] Serving index.html. Current playlist: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
-[2025-05-17 18:33:57,283] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 1
-[2025-05-17 18:33:57,286] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4
-[2025-05-17 18:34:09,745] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
-[2025-05-17 18:34:09,848] [INFO] [main] API call to restart MPlayer.
-[2025-05-17 18:34:10,349] [INFO] [main] MPlayer restarted successfully via API.
-[2025-05-17 18:34:11,069] [INFO] [main] Loop mode set to: file
-[2025-05-17 18:34:15,534] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 1
-[2025-05-17 18:34:15,536] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4
-[2025-05-17 18:34:30,757] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
-[2025-05-17 18:34:31,625] [INFO] [main] API call to restart MPlayer.
-[2025-05-17 18:34:32,126] [INFO] [main] MPlayer restarted successfully via API.
-[2025-05-17 18:34:32,850] [INFO] [main] Loop mode set to: playlist
-[2025-05-17 18:34:33,968] [INFO] [main] Play command: Attempting to play 'Screencast From 2025-02-06 10-33-00.mp4' at index 0
-[2025-05-17 18:34:39,658] [INFO] [main] Changing track (next) via Flask to: VID-20250409-WA0025.mp4 at index 1
-[2025-05-17 18:34:39,662] [INFO] [main] Successfully loaded and started VID-20250409-WA0025.mp4 for next.
-[2025-05-17 18:34:51,755] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
-[2025-05-17 18:34:54,381] [INFO] [main] Flask application is exiting. Terminating MPlayer.
+[2025-05-17 19:19:38,541] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/kanga2/server.log
+[2025-05-17 19:19:38,541] [INFO] [main] /home/luque/Documents/work/fiver/kanga2/playlist.json not found. Starting with empty playlist.
+[2025-05-17 19:19:38,545] [INFO] [main] Synchronizing playlist with files in upload folder...
+[2025-05-17 19:19:38,545] [INFO] [main] Added to playlist (found in uploads but not in playlist.json): ['20250513_130757.mp4', '20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:19:38,545] [INFO] [main] Playlist synchronized. New playlist: ['20250513_130757.mp4', '20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:19:38,545] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:19:38,545] [INFO] [main] Playlist after sync: ['20250513_130757.mp4', '20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:19:38,545] [INFO] [main] Starting Flask with MPlayer support...
+[2025-05-17 19:19:55,617] [INFO] [main] Serving index.html. Current playlist: ['20250513_130757.mp4', '20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:19:58,355] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 19:19:58,855] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 19:19:59,580] [INFO] [main] Loop mode set to: playlist
+[2025-05-17 19:20:02,383] [INFO] [main] Play command: Attempting to play '20250513_130757.mp4' at index 0
+[2025-05-17 19:20:02,589] [INFO] [main] Playback started for: 20250513_130757.mp4
+[2025-05-17 19:20:16,267] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:20:16,267] [INFO] [main] Moved 'VID-20250409-WA0025.mp4' to position 1 (next in playlist). New playlist: ['20250513_130757.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 19:20:16,267] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:20:31,770] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
+[2025-05-17 19:20:36,874] [INFO] [main] Play command: Attempting to play '20250513_130757.mp4' at index 0
+[2025-05-17 19:20:37,077] [INFO] [main] Playback started for: 20250513_130757.mp4
+[2025-05-17 19:20:41,255] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:20:41,256] [INFO] [main] Moved '20250513_152258.mp4' to position 1 (next in playlist). New playlist: ['20250513_130757.mp4', '20250513_152258.mp4', 'VID-20250409-WA0025.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 19:20:41,256] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:21:04,781] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
+[2025-05-17 19:23:03,944] [INFO] [main] Play command: Attempting to play '20250513_130757.mp4' at index 0
+[2025-05-17 19:23:04,149] [INFO] [main] Playback started for: 20250513_130757.mp4
+[2025-05-17 19:23:08,227] [INFO] [main] Changing track (next) via Flask to: 20250513_152258.mp4 at index 1
+[2025-05-17 19:23:08,497] [INFO] [main] Successfully loaded and started 20250513_152258.mp4 for next.
+[2025-05-17 19:23:13,125] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:23:13,125] [INFO] [main] Moved 'Screencast From 2025-01-30 15-31-14.mp4' to position 2 (next in playlist). New playlist: ['20250513_130757.mp4', '20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:23:13,125] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:23:15,558] [INFO] [main] Changing track (next) via Flask to: Screencast From 2025-01-30 15-31-14.mp4 at index 2
+[2025-05-17 19:23:15,793] [INFO] [main] Successfully loaded and started Screencast From 2025-01-30 15-31-14.mp4 for next.
+[2025-05-17 19:23:18,133] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:23:18,133] [INFO] [main] Moved '20250513_130757.mp4' to position 2 (next in playlist). New playlist: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:23:18,135] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:23:23,503] [INFO] [main] Changing track (next) via Flask to: 20250513_130757.mp4 at index 2
+[2025-05-17 19:23:23,737] [INFO] [main] Successfully loaded and started 20250513_130757.mp4 for next.
+[2025-05-17 19:23:27,649] [INFO] [main] Changing track (previous) via Flask to: Screencast From 2025-01-30 15-31-14.mp4 at index 1
+[2025-05-17 19:23:27,882] [INFO] [main] Successfully loaded and started Screencast From 2025-01-30 15-31-14.mp4 for previous.
+[2025-05-17 19:23:31,114] [INFO] [main] Play command: Attempting to play 'Screencast From 2025-01-30 15-31-14.mp4' at index 1
+[2025-05-17 19:23:31,380] [INFO] [main] Playback started for: Screencast From 2025-01-30 15-31-14.mp4
+[2025-05-17 19:23:35,706] [WARNING] [main] Pause not supported in MPlayer implementation.
+[2025-05-17 19:23:37,864] [INFO] [main] Play command: Attempting to play 'Screencast From 2025-01-30 15-31-14.mp4' at index 1
+[2025-05-17 19:23:38,179] [INFO] [main] Playback started for: Screencast From 2025-01-30 15-31-14.mp4
+[2025-05-17 19:23:43,114] [WARNING] [main] Pause not supported in MPlayer implementation.
+[2025-05-17 19:23:55,802] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
+[2025-05-17 19:24:03,483] [INFO] [main] Flask application is exiting. Terminating MPlayer.
+[2025-05-17 19:30:44,684] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/kanga2/server.log
+[2025-05-17 19:30:44,684] [INFO] [main] Playlist loaded from /home/luque/Documents/work/fiver/kanga2/playlist.json: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:30:44,687] [INFO] [main] Synchronizing playlist with files in upload folder...
+[2025-05-17 19:30:44,687] [INFO] [main] Playlist is already synchronized with the uploads folder.
+[2025-05-17 19:30:44,687] [INFO] [main] Playlist after sync: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:30:44,687] [INFO] [main] Starting Flask with MPlayer support...
+[2025-05-17 19:30:59,396] [INFO] [main] Serving index.html. Current playlist: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:31:04,747] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 19:31:05,248] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 19:31:05,970] [INFO] [main] Loop mode set to: playlist
+[2025-05-17 19:31:12,140] [INFO] [main] Play command: Attempting to play '20250513_152258.mp4' at index 0. Main's current_loop_mode: playlist. Controller's actual_loop_mode: playlist
+[2025-05-17 19:31:12,141] [INFO] [main] Initiating playback with playlist mode (based on controller state). Full playlist will be loaded starting at index 0.
+[2025-05-17 19:31:12,347] [INFO] [main] Playback started for: 20250513_152258.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 19:31:18,388] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:31:18,388] [INFO] [main] Moved 'VID-20250409-WA0025.mp4' to position 1 (next in playlist). New playlist: ['20250513_152258.mp4', 'VID-20250409-WA0025.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4']
+[2025-05-17 19:31:18,389] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:32:26,904] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:32:26,905] [INFO] [main] Moved 'VID-20250409-WA0025.mp4' to position 2 (next in playlist). New playlist: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4']
+[2025-05-17 19:32:26,905] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:35:16,327] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 19:35:16,891] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 19:35:17,576] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
+[2025-05-17 19:35:17,615] [INFO] [main] Loop mode set to: file
+[2025-05-17 19:35:20,511] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 19:35:21,012] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 19:35:21,734] [INFO] [main] Loop mode set to: playlist
+[2025-05-17 19:38:13,864] [INFO] [main] Flask application is exiting. Terminating MPlayer.
+[2025-05-17 19:38:16,080] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/kanga2/server.log
+[2025-05-17 19:38:16,080] [INFO] [main] Playlist loaded from /home/luque/Documents/work/fiver/kanga2/playlist.json: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4']
+[2025-05-17 19:38:16,086] [INFO] [main] Synchronizing playlist with files in upload folder...
+[2025-05-17 19:38:16,086] [INFO] [main] Playlist is already synchronized with the uploads folder.
+[2025-05-17 19:38:16,086] [INFO] [main] Playlist after sync: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4']
+[2025-05-17 19:38:16,086] [INFO] [main] Starting Flask with MPlayer support...
+[2025-05-17 19:38:22,595] [INFO] [main] Serving index.html. Current playlist: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4']
+[2025-05-17 19:38:25,756] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 19:38:26,256] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 19:38:26,973] [INFO] [main] Loop mode set to: playlist
+[2025-05-17 19:38:43,223] [INFO] [main] Play command: Attempting to play '20250513_152258.mp4' at index 0. Main's current_loop_mode: playlist. Controller's actual_loop_mode: playlist
+[2025-05-17 19:38:43,223] [INFO] [main] Initiating playback with playlist mode (based on controller state). Full playlist will be loaded starting at index 0.
+[2025-05-17 19:38:43,429] [INFO] [main] Playback started for: 20250513_152258.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 19:43:10,803] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
+[2025-05-17 19:44:49,458] [INFO] [main] Flask application is exiting. Terminating MPlayer.
+[2025-05-17 19:44:55,183] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/kanga2/server.log
+[2025-05-17 19:44:55,183] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/kanga2/server.log
+[2025-05-17 19:44:55,184] [INFO] [main] Playlist loaded from /home/luque/Documents/work/fiver/kanga2/playlist.json: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4']
+[2025-05-17 19:44:55,184] [INFO] [main] Playlist loaded from /home/luque/Documents/work/fiver/kanga2/playlist.json: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4']
+[2025-05-17 19:44:55,184] [INFO] [mplayer_controller] MPlayerController initialized. Log path: /home/luque/Documents/work/fiver/kanga2/mplayer.log
+[2025-05-17 19:44:55,190] [INFO] [main] Synchronizing playlist with files in upload folder...
+[2025-05-17 19:44:55,190] [INFO] [main] Synchronizing playlist with files in upload folder...
+[2025-05-17 19:44:55,190] [INFO] [main] Playlist is already synchronized with the uploads folder.
+[2025-05-17 19:44:55,190] [INFO] [main] Playlist is already synchronized with the uploads folder.
+[2025-05-17 19:44:55,190] [INFO] [main] Playlist after sync: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4']
+[2025-05-17 19:44:55,190] [INFO] [main] Playlist after sync: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4']
+[2025-05-17 19:44:55,190] [INFO] [main] Starting Flask with MPlayer support...
+[2025-05-17 19:44:55,190] [INFO] [main] Starting Flask with MPlayer support...
+[2025-05-17 19:44:55,198] [INFO] [_internal] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.45.3.0:5000
+[2025-05-17 19:44:55,198] [INFO] [_internal] [33mPress CTRL+C to quit[0m
+[2025-05-17 19:44:55,819] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:44:55] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:44:58,816] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:44:58] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:01,817] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:01] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:04,818] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:04] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:07,820] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:07] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:10,818] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:10] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:13,820] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:13] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:16,819] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:16] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:19,817] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:19] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:22,825] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:22] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:25,821] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:25] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:28,822] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:28] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:31,821] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:31] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:34,819] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:34] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:35,468] [INFO] [main] Serving index.html. Current playlist: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4']
+[2025-05-17 19:45:35,468] [INFO] [main] Serving index.html. Current playlist: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4']
+[2025-05-17 19:45:35,484] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:35] "GET / HTTP/1.1" 200 -
+[2025-05-17 19:45:35,699] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:35] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+[2025-05-17 19:45:35,700] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:35] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+[2025-05-17 19:45:35,804] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:35] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:37,912] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 19:45:37,912] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 19:45:37,912] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
+[2025-05-17 19:45:38,413] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 19:45:38,413] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 19:45:38,414] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:38] "POST /api/mplayer/restart HTTP/1.1" 200 -
+[2025-05-17 19:45:38,752] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:38] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:39,129] [INFO] [mplayer_controller] Loop mode set to: playlist
+[2025-05-17 19:45:39,129] [INFO] [main] Loop mode set to: playlist
+[2025-05-17 19:45:39,129] [INFO] [main] Loop mode set to: playlist
+[2025-05-17 19:45:39,130] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:39] "POST /api/settings/loop_mode HTTP/1.1" 200 -
+[2025-05-17 19:45:41,758] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:41] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:43,633] [INFO] [main] Play command: Attempting to play '20250513_152258.mp4' at index 0. Main's current_loop_mode: playlist. Controller's actual_loop_mode: playlist
+[2025-05-17 19:45:43,633] [INFO] [main] Play command: Attempting to play '20250513_152258.mp4' at index 0. Main's current_loop_mode: playlist. Controller's actual_loop_mode: playlist
+[2025-05-17 19:45:43,633] [INFO] [main] Initiating playback with playlist mode (based on controller state). Full playlist will be loaded starting at index 0.
+[2025-05-17 19:45:43,633] [INFO] [main] Initiating playback with playlist mode (based on controller state). Full playlist will be loaded starting at index 0.
+[2025-05-17 19:45:43,634] [INFO] [mplayer_controller] Using playlist loop mode
+[2025-05-17 19:45:43,634] [INFO] [mplayer_controller] Created temporary playlist with 4 files, will start at index 0
+[2025-05-17 19:45:43,636] [INFO] [mplayer_controller] Configuring MPlayer for Laptop (X11) - playlist mode
+[2025-05-17 19:45:43,838] [WARNING] [mplayer_controller] MPLAYER_LOG_PATH only contains Python-written 'Playing /home/luque/Documents/work/fiver/kanga2/app/uploads/20250513_152258.mp4' line after Popen in _load_playlist_with_loop.
+[2025-05-17 19:45:43,838] [INFO] [main] Playback started for: 20250513_152258.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 19:45:43,838] [INFO] [main] Playback started for: 20250513_152258.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 19:45:43,838] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:43] "POST /api/control/play HTTP/1.1" 200 -
+[2025-05-17 19:45:43,850] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:43] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:44,754] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:44] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:48,001] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:48] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:50,759] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:50] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:52,238] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:45:52,238] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:45:52,238] [INFO] [main] Moved '20250513_130757.mp4' to position 1 (next in playlist). New playlist: ['20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:45:52,238] [INFO] [main] Moved '20250513_130757.mp4' to position 1 (next in playlist). New playlist: ['20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:45:52,239] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:45:52,239] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:45:52,240] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:52] "POST /api/playlist/set_next HTTP/1.1" 200 -
+[2025-05-17 19:45:52,291] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:52] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:53,751] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:53] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:56,751] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:56] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:45:59,753] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:45:59] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:02,751] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:02] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:05,758] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:05] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:08,767] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:08] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:11,754] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:11] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:14,760] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:14] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:16,702] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:46:16,702] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:46:16,702] [INFO] [main] Moved 'VID-20250409-WA0025.mp4' to position 1 (next in playlist). New playlist: ['20250513_152258.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 19:46:16,702] [INFO] [main] Moved 'VID-20250409-WA0025.mp4' to position 1 (next in playlist). New playlist: ['20250513_152258.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 19:46:16,703] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:46:16,703] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:46:16,704] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:16] "POST /api/playlist/set_next HTTP/1.1" 200 -
+[2025-05-17 19:46:16,829] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:16] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:17,754] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:17] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:20,757] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:20] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:22,643] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:46:22,643] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:46:22,643] [INFO] [main] Moved 'Screencast From 2025-01-30 15-31-14.mp4' to position 1 (next in playlist). New playlist: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4']
+[2025-05-17 19:46:22,643] [INFO] [main] Moved 'Screencast From 2025-01-30 15-31-14.mp4' to position 1 (next in playlist). New playlist: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4']
+[2025-05-17 19:46:22,643] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:46:22,643] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:46:22,644] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:22] "POST /api/playlist/set_next HTTP/1.1" 200 -
+[2025-05-17 19:46:22,658] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:22] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:23,761] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:23] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:26,756] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:26] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:29,760] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:29] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:32,757] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:32] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:35,753] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:35] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:38,755] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:38] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:41,757] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:41] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:44,754] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:44] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:47,755] [INFO] [mplayer_controller] File change detected in MPlayer log: Screencast From 2025-01-30 15-31-14.mp4 (was: 20250513_152258.mp4)
+[2025-05-17 19:46:47,756] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:47] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:50,761] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:50] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:51,192] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:46:51,192] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:46:51,192] [INFO] [main] Moved '20250513_130757.mp4' to position 2 (next in playlist). New playlist: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:46:51,192] [INFO] [main] Moved '20250513_130757.mp4' to position 2 (next in playlist). New playlist: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:46:51,193] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:46:51,193] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:46:51,193] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:51] "POST /api/playlist/set_next HTTP/1.1" 200 -
+[2025-05-17 19:46:51,280] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:51] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:53,758] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:53] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:56,766] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:56] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:46:59,760] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:46:59] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:02,760] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:02] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:05,760] [INFO] [mplayer_controller] File change detected in MPlayer log: VID-20250409-WA0025.mp4 (was: Screencast From 2025-01-30 15-31-14.mp4)
+[2025-05-17 19:47:05,761] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:05] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:08,759] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:08] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:11,765] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:11] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:14,757] [INFO] [mplayer_controller] File change detected in MPlayer log: 20250513_130757.mp4 (was: VID-20250409-WA0025.mp4)
+[2025-05-17 19:47:14,758] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:14] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:17,766] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:17] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:20,759] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:20] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:23,766] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:23] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:26,762] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:26] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:29,763] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:29] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:32,768] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:32] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:35,760] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:35] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:38,763] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:38] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:41,760] [INFO] [mplayer_controller] File change detected in MPlayer log: 20250513_152258.mp4 (was: 20250513_130757.mp4)
+[2025-05-17 19:47:41,761] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:41] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:44,769] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:44] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:47,759] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:47] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:50,767] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:50] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:53,769] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:53] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:47:56,775] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:47:56] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:00,045] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:00] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:02,776] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:02] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:05,767] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:05] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:08,770] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:08] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:11,772] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:11] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:14,768] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:14] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:17,772] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:17] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:20,766] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:20] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:23,770] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:23] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:26,768] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:26] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:29,775] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:29] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:32,771] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:32] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:35,776] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:35] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:38,772] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:38] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:41,774] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:41] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:44,771] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:44] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:47,770] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:47] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:50,772] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:50] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:53,773] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:53] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:56,771] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:56] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:48:59,784] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:48:59] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:02,773] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:02] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:05,776] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:05] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:08,772] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:08] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:11,774] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:11] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:14,788] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:14] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:17,775] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:17] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:20,775] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:20] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:23,776] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:23] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:26,778] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:26] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:29,777] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:29] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:32,779] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:32] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:35,783] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:35] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:38,784] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:38] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:41,784] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:41] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:44,779] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:44] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:47,781] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:47] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:50,781] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:50] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:53,784] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:53] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:56,786] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:56] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:49:59,785] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:49:59] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:02,785] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:02] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:05,786] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:05] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:08,785] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:08] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:11,786] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:11] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:14,785] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:14] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:17,793] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:17] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:20,786] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:20] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:23,786] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:23] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:26,787] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:26] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:29,786] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:29] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:32,787] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:32] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:35,789] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:35] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:38,790] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:38] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:41,792] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:41] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:44,794] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:44] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:47,791] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:47] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:50,791] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:50] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:53,793] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:53] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:56,794] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:56] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:50:59,793] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:50:59] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:02,796] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:02] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:05,795] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:05] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:08,793] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:08] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:11,794] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:11] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:14,796] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:14] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:17,796] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:17] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:20,797] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:20] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:23,796] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:23] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:26,796] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:26] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:29,796] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:29] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:32,798] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:32] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:35,797] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:35] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:38,798] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:38] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:41,793] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:41] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:44,798] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:44] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:47,805] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:47] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:50,807] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:50] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:53,803] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:53] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:56,801] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:56] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:51:59,803] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:51:59] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:52:02,795] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:52:02] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:52:05,804] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:52:05] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:52:08,799] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:52:08] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:52:11,423] [INFO] [main] Flask application is exiting. Terminating MPlayer.
+[2025-05-17 19:52:11,423] [INFO] [main] Flask application is exiting. Terminating MPlayer.
+[2025-05-17 19:52:11,424] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
+[2025-05-17 19:58:07,806] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/kanga2/server.log
+[2025-05-17 19:58:07,806] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/kanga2/server.log
+[2025-05-17 19:58:07,806] [INFO] [main] Playlist loaded from /home/luque/Documents/work/fiver/kanga2/playlist.json: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:58:07,806] [INFO] [main] Playlist loaded from /home/luque/Documents/work/fiver/kanga2/playlist.json: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:58:07,806] [INFO] [mplayer_controller] MPlayerController initialized. Log path: /home/luque/Documents/work/fiver/kanga2/mplayer.log
+[2025-05-17 19:58:07,809] [INFO] [main] Synchronizing playlist with files in upload folder...
+[2025-05-17 19:58:07,809] [INFO] [main] Synchronizing playlist with files in upload folder...
+[2025-05-17 19:58:07,809] [INFO] [main] Playlist is already synchronized with the uploads folder.
+[2025-05-17 19:58:07,809] [INFO] [main] Playlist is already synchronized with the uploads folder.
+[2025-05-17 19:58:07,809] [INFO] [main] Playlist after sync: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:58:07,809] [INFO] [main] Playlist after sync: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:58:07,809] [INFO] [main] Starting Flask with MPlayer support...
+[2025-05-17 19:58:07,809] [INFO] [main] Starting Flask with MPlayer support...
+[2025-05-17 19:58:07,811] [INFO] [_internal] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.45.3.0:5000
+[2025-05-17 19:58:07,811] [INFO] [_internal] [33mPress CTRL+C to quit[0m
+[2025-05-17 19:58:10,187] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:10] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:11,042] [INFO] [main] Serving index.html. Current playlist: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:58:11,042] [INFO] [main] Serving index.html. Current playlist: ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', '20250513_130757.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:58:11,054] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:11] "GET / HTTP/1.1" 200 -
+[2025-05-17 19:58:11,160] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:11] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+[2025-05-17 19:58:11,161] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:11] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+[2025-05-17 19:58:11,230] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:11] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:14,193] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:14] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:14,272] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 19:58:14,272] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 19:58:14,273] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
+[2025-05-17 19:58:14,773] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 19:58:14,773] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 19:58:14,774] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:14] "POST /api/mplayer/restart HTTP/1.1" 200 -
+[2025-05-17 19:58:15,519] [INFO] [mplayer_controller] Loop mode set to: playlist
+[2025-05-17 19:58:15,519] [INFO] [main] Loop mode set to: playlist
+[2025-05-17 19:58:15,519] [INFO] [main] Loop mode set to: playlist
+[2025-05-17 19:58:15,520] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:15] "POST /api/settings/loop_mode HTTP/1.1" 200 -
+[2025-05-17 19:58:17,190] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:17] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:20,052] [INFO] [main] Play command: Attempting to play '20250513_152258.mp4' at index 0. Main's current_loop_mode: playlist. Controller's actual_loop_mode: playlist
+[2025-05-17 19:58:20,052] [INFO] [main] Play command: Attempting to play '20250513_152258.mp4' at index 0. Main's current_loop_mode: playlist. Controller's actual_loop_mode: playlist
+[2025-05-17 19:58:20,052] [INFO] [main] Initiating playback with playlist mode (based on controller state). Full playlist will be loaded starting at index 0.
+[2025-05-17 19:58:20,052] [INFO] [main] Initiating playback with playlist mode (based on controller state). Full playlist will be loaded starting at index 0.
+[2025-05-17 19:58:20,053] [INFO] [mplayer_controller] Successfully wrote 4 items to '/home/luque/Documents/work/fiver/kanga2/temp_playlist.txt'.
+[2025-05-17 19:58:20,053] [INFO] [mplayer_controller] Playlist mode: No current file playing or player stopped. Starting new playlist immediately.
+[2025-05-17 19:58:20,056] [INFO] [mplayer_controller] Configuring MPlayer for Laptop (X11) - playlist execution
+[2025-05-17 19:58:20,056] [INFO] [mplayer_controller] MPlayer will start with '20250513_152258.mp4' and then use playlist '/home/luque/Documents/work/fiver/kanga2/temp_playlist.txt'.
+[2025-05-17 19:58:20,203] [WARNING] [mplayer_controller] Found filename in log '20250513_152258.mp4\n' (from path '/home/luque/Documents/work/fiver/kanga2/app/uploads/20250513_152258.mp4\n') that doesn't exist at expected location '/home/luque/Documents/work/fiver/kanga2/app/uploads/20250513_152258.mp4\n'
+[2025-05-17 19:58:20,204] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:20] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:20,258] [INFO] [mplayer_controller] MPlayer started/restarted. Current file set to: '20250513_152258.mp4', Playing: True
+[2025-05-17 19:58:20,258] [INFO] [main] Playback started for: 20250513_152258.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 19:58:20,258] [INFO] [main] Playback started for: 20250513_152258.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 19:58:20,259] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:20] "POST /api/control/play HTTP/1.1" 200 -
+[2025-05-17 19:58:20,274] [WARNING] [mplayer_controller] Found filename in log '20250513_152258.mp4\n' (from path '/home/luque/Documents/work/fiver/kanga2/app/uploads/20250513_152258.mp4\n') that doesn't exist at expected location '/home/luque/Documents/work/fiver/kanga2/app/uploads/20250513_152258.mp4\n'
+[2025-05-17 19:58:20,275] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:20] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:23,204] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:23] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:25,637] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:58:25,637] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:58:25,638] [INFO] [main] Moved '20250513_130757.mp4' to position 1 (next in playlist). New playlist: ['20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:58:25,638] [INFO] [main] Moved '20250513_130757.mp4' to position 1 (next in playlist). New playlist: ['20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4', 'VID-20250409-WA0025.mp4']
+[2025-05-17 19:58:25,638] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:58:25,638] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:58:25,638] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:25] "POST /api/playlist/set_next HTTP/1.1" 200 -
+[2025-05-17 19:58:25,654] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:25] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:26,200] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:26] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:29,195] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:29] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:32,191] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:32] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:35,191] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:35] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:38,193] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:38] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:41,190] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:41] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:44,192] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:44] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:45,455] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:58:45,455] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/kanga2/playlist.json
+[2025-05-17 19:58:45,456] [INFO] [main] Moved 'VID-20250409-WA0025.mp4' to position 1 (next in playlist). New playlist: ['20250513_152258.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 19:58:45,456] [INFO] [main] Moved 'VID-20250409-WA0025.mp4' to position 1 (next in playlist). New playlist: ['20250513_152258.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 19:58:45,456] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:58:45,456] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 19:58:45,457] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:45] "POST /api/playlist/set_next HTTP/1.1" 200 -
+[2025-05-17 19:58:45,566] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:45] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:47,196] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:47] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:50,194] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:50] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:53,192] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:53] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:56,193] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:56] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:58:59,192] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:58:59] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:02,191] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:02] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:05,193] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:05] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:08,192] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:08] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:11,202] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:11] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:14,210] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:14] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:17,218] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:17] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:20,194] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:20] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:23,198] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:23] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:26,206] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:26] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:29,200] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:29] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:32,196] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:32] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:35,199] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:35] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:38,195] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:38] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:41,204] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:41] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:44,203] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:44] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:47,201] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:47] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:50,203] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:50] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:53,205] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:53] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:56,216] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:56] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 19:59:59,205] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 19:59:59] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 20:00:02,203] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 20:00:02] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 20:00:05,208] [INFO] [_internal] 127.0.0.1 - - [17/May/2025 20:00:05] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 20:00:07,995] [INFO] [main] Flask application is exiting. Terminating MPlayer.
+[2025-05-17 20:00:07,995] [INFO] [main] Flask application is exiting. Terminating MPlayer.
+[2025-05-17 20:00:07,995] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
+[2025-05-17 20:00:08,027] [INFO] [mplayer_controller] MPlayer terminated.

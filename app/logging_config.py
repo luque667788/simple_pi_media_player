@@ -28,7 +28,17 @@ def setup_logging(app, log_filename="server.log"):
 
     app.logger.addHandler(file_handler)
     app.logger.addHandler(console_handler)  # Keep this enabled for debugging
-    app.logger.setLevel(logging.INFO)
+    app.logger.setLevel(logging.DEBUG) # Changed from logging.INFO to logging.DEBUG
+
+    # Set up root logger to ensure all modules' logs propagate and are visible
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+    # Remove all handlers from root logger to avoid duplicate logs
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+    # Add both handlers to root logger as well
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
 
     # Test that logging works
     app.logger.info(f"Logging configured. Log file at: {log_path}")
