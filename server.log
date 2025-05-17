@@ -1,0 +1,33 @@
+[2025-05-17 18:17:18,878] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/kanga2/server.log
+[2025-05-17 18:17:18,878] [INFO] [main] Playlist loaded from /home/luque/Documents/work/fiver/kanga2/playlist.json: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 18:17:18,880] [INFO] [main] Initial playlist: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 18:17:18,881] [INFO] [main] Starting Flask with MPlayer support...
+[2025-05-17 18:17:32,739] [INFO] [main] Serving index.html. Current playlist: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 18:17:34,727] [INFO] [main] Play command: Attempting to play 'Screencast From 2025-02-06 10-33-00.mp4' at index 0
+[2025-05-17 18:17:39,690] [INFO] [main] Serving index.html. Current playlist: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 18:17:52,667] [INFO] [main] Play command: Attempting to play 'Screencast From 2025-02-06 10-33-00.mp4' at index 0
+[2025-05-17 18:18:14,953] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 1
+[2025-05-17 18:18:14,958] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4
+[2025-05-17 18:18:27,803] [INFO] [main] Flask application is exiting. Terminating MPlayer.
+[2025-05-17 18:33:46,497] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/kanga2/server.log
+[2025-05-17 18:33:46,497] [INFO] [main] Playlist loaded from /home/luque/Documents/work/fiver/kanga2/playlist.json: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 18:33:46,502] [INFO] [main] Initial playlist: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 18:33:46,502] [INFO] [main] Starting Flask with MPlayer support...
+[2025-05-17 18:33:54,593] [INFO] [main] Serving index.html. Current playlist: ['Screencast From 2025-02-06 10-33-00.mp4', 'VID-20250409-WA0025.mp4', '20250513_152258.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 18:33:57,283] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 1
+[2025-05-17 18:33:57,286] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4
+[2025-05-17 18:34:09,745] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
+[2025-05-17 18:34:09,848] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 18:34:10,349] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 18:34:11,069] [INFO] [main] Loop mode set to: file
+[2025-05-17 18:34:15,534] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 1
+[2025-05-17 18:34:15,536] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4
+[2025-05-17 18:34:30,757] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
+[2025-05-17 18:34:31,625] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 18:34:32,126] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 18:34:32,850] [INFO] [main] Loop mode set to: playlist
+[2025-05-17 18:34:33,968] [INFO] [main] Play command: Attempting to play 'Screencast From 2025-02-06 10-33-00.mp4' at index 0
+[2025-05-17 18:34:39,658] [INFO] [main] Changing track (next) via Flask to: VID-20250409-WA0025.mp4 at index 1
+[2025-05-17 18:34:39,662] [INFO] [main] Successfully loaded and started VID-20250409-WA0025.mp4 for next.
+[2025-05-17 18:34:51,755] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
+[2025-05-17 18:34:54,381] [INFO] [main] Flask application is exiting. Terminating MPlayer.

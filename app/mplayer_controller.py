@@ -2,11 +2,13 @@ import subprocess
 import os
 import time
 import logging
+from dotenv import load_dotenv # Add this import
 
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 MPLAYER_LOG_PATH = os.path.join(PROJECT_ROOT, "mplayer.log")
+load_dotenv(os.path.join(PROJECT_ROOT, '.env')) # Load .env file
 
 class MPlayerController:
     def __init__(self):
@@ -37,10 +39,25 @@ class MPlayerController:
 
         logger.info(f"Starting MPlayer with file: {full_path}")
         
-        cmd = [
-            "mplayer",
-            "-vo", "x11",  # Use X11 output instead of framebuffer for GUI environments
-        ]
+        target_device = os.getenv("KTV_TARGET_DEVICE", "laptop") # Get target device from .env
+        
+        cmd = ["mplayer"]
+
+        if target_device == "raspberrypi":
+            cmd.extend([
+                "-vo", "fbdev",
+                "-fbdev", "/dev/fb0", # Corrected path for framebuffer
+                "-x", "240",
+                "-y", "320",
+                "-bpp", "16",
+                "-vf", "scale=240:320"
+            ])
+            logger.info("Configuring MPlayer for Raspberry Pi (framebuffer)")
+        else: # Default to laptop (X11)
+            cmd.extend([
+                "-vo", "x11",
+            ])
+            logger.info("Configuring MPlayer for Laptop (X11)")
         
         # Add loop parameter based on loop mode
         if self.loop_mode == 'file':
@@ -181,7 +198,7 @@ class MPlayerController:
             with open(temp_playlist_path, 'w') as f:
                 for file in playlist_files:
                     full_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', file)
-                    f.write(f"{full_path}\n")
+                    f.write(f"{full_path}\\n")
                     
             logger.info(f"Created temporary playlist with {len(playlist_files)} files, will start at index {start_index}")
             
@@ -205,14 +222,31 @@ class MPlayerController:
             if terminate_needed:
                 if self.process:
                     self.terminate_player()
-                    
-                cmd = [
-                    "mplayer", 
-                    "-vo", "x11",
+                
+                target_device = os.getenv("KTV_TARGET_DEVICE", "laptop") # Get target device from .env
+                cmd = ["mplayer"]
+
+                if target_device == "raspberrypi":
+                    cmd.extend([
+                        "-vo", "fbdev",
+                        "-fbdev", "/dev/fb0", # Corrected path for framebuffer
+                        "-x", "240",
+                        "-y", "320",
+                        "-bpp", "16",
+                        "-vf", "scale=240:320"
+                    ])
+                    logger.info("Configuring MPlayer for Raspberry Pi (framebuffer) - playlist mode")
+                else: # Default to laptop (X11)
+                    cmd.extend([
+                        "-vo", "x11",
+                    ])
+                    logger.info("Configuring MPlayer for Laptop (X11) - playlist mode")
+                
+                cmd.extend([
                     "-quiet",
                     "-nolirc",
                     "-loop", "0",  # Loop infinitely
-                ]
+                ])
                 
                 if start_file:
                     # Specify the initial file and then use the playlist for future files
