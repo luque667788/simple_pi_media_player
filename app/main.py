@@ -1,45 +1,44 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory
-import os
-import logging
-import time # Added to fix NameError
-import json # Added for playlist persistence
-import threading # For the image auto-advance timer
-import atexit # For cleanup on exit
+import os # Import for operating system dependent functionalities
+import json # Import for JSON manipulation
+import time # Import for time-related functions
+import atexit # Import for registering cleanup functions
 
-# Custom logging setup
+# Custom logging configuration
 from logging_config import setup_logging
 
-# MPlayer Controller instead of MPV Controller
+# Use MPlayerController for media playback management
 from mplayer_controller import MPlayerController
 
-# Initialize Flask app
+# Initialize Flask application with specified template and static directories
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
-# --- Configuration ---
-# Determine project root dynamically (assuming main.py is in 'app' directory)
+# --- Application Configuration ---
+# Dynamically determine the project root directory (assumes main.py is in 'app')
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 UPLOAD_FOLDER = os.path.join(PROJECT_ROOT, 'app', 'uploads')
-PLAYLIST_FILE = os.path.join(PROJECT_ROOT, 'playlist.json') # For persisting playlist
+PLAYLIST_FILE = os.path.join(PROJECT_ROOT, 'playlist.json') # Path for persistent playlist storage
 ALLOWED_EXTENSIONS = {'mp4', 'mov', 'avi', 'mkv'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 300 * 1024 * 1024  # 300 MB upload limit
+app.config['MAX_CONTENT_LENGTH'] = 300 * 1024 * 1024  # Set upload limit to 300 MB
 
 # --- Logging Setup ---
-# Call setup_logging, passing the app instance and desired log file name (relative to project root)
+# Initialize logging with custom configuration and log file
 setup_logging(app, log_filename="server.log")
-logger = app.logger # Use Flask's configured logger
+logger = app.logger # Use Flask's logger instance
 
-# --- Media Management (In-memory for simplicity first) ---
-media_playlist = [] # List of filenames (relative to UPLOAD_FOLDER)
+# --- Media Playlist State (In-memory for runtime operations) ---
+media_playlist = [] # Stores filenames relative to UPLOAD_FOLDER
 current_media_index = -1
 is_playing = False
 loop_playlist = False
-current_loop_mode = 'none'  # Persist the last set loop mode
-# current_transition = "fade" # Default, if we implement selectable transitions
+current_loop_mode = 'none'  # Tracks the last set loop mode
+# current_transition = "fade" # Placeholder for future transition effects
 
-# --- Playlist Persistence Functions ---
+# --- Playlist Persistence Utilities ---
 def load_playlist_from_file():
+    """Loads the playlist from persistent storage, or initializes an empty list if unavailable."""
     global media_playlist
     try:
         if os.path.exists(PLAYLIST_FILE):
@@ -59,6 +58,7 @@ def load_playlist_from_file():
         media_playlist = []
 
 def save_playlist_to_file():
+    """Persists the current playlist to disk as JSON."""
     try:
         with open(PLAYLIST_FILE, 'w') as f:
             json.dump(media_playlist, f, indent=4)
@@ -66,17 +66,17 @@ def save_playlist_to_file():
     except Exception as e:
         logger.error(f"Error saving playlist to {PLAYLIST_FILE}: {e}")
 
-# Load playlist at startup
+# Load playlist at application startup
 load_playlist_from_file()
 
 # --- MPlayer Controller Instance ---
-mpv = MPlayerController() # Initialize the controller with MPlayer instead of MPV
+mpv = MPlayerController() # Instantiate controller for MPlayer operations
 
-# --- Playlist Synchronization Function ---
+# --- Playlist Synchronization Utility ---
 def synchronize_playlist_with_uploads():
     """
-    Scans the UPLOAD_FOLDER for media files and updates media_playlist
-    and playlist.json to match.
+    Scans the upload directory for valid media files and synchronizes the in-memory playlist
+    and persistent playlist file accordingly.
     """
     global media_playlist
     logger.info("Synchronizing playlist with files in upload folder...")
@@ -132,20 +132,22 @@ def synchronize_playlist_with_uploads():
     except Exception as e:
         logger.error(f"Error synchronizing playlist with uploads folder: {e}")
 
-# --- Utility Functions ---
+# --- File Extension Validation ---
 def allowed_file(filename):
+    """Checks if the provided filename has an allowed extension."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --- Routes ---
+# --- Flask Route Definitions ---
 @app.route('/')
 def index():
-    """Serves the main HTML page."""
+    """Serves the main application HTML page."""
     logger.info(f"Serving index.html. Current playlist: {media_playlist}")
     return render_template('index.html')
 
 @app.route('/api/upload', methods=['POST'])
 def upload_files():
+    """Handles media file uploads via POST requests."""
     global media_playlist
     if 'mediaFiles' not in request.files:
         logger.warning("Upload attempt with no 'mediaFiles' part.")
@@ -197,6 +199,7 @@ def upload_files():
 
 @app.route('/api/playlist', methods=['GET'])
 def get_playlist():
+    """Returns the current playlist and playback status as JSON."""
     global current_loop_mode, current_media_index, is_playing, media_playlist, loop_playlist
 
     mpv_status = mpv.get_playback_status()
@@ -250,6 +253,7 @@ def get_playlist():
 
 @app.route('/api/control/play', methods=['POST'])
 def control_play():
+    """Handles play requests, including resuming or starting playback."""
     global current_media_index, is_playing, media_playlist, current_loop_mode # current_loop_mode is main.py's perspective
     
     # First check if MPlayer is running and paused - if so, just unpause it
@@ -313,6 +317,7 @@ def control_play():
 
 @app.route('/api/control/pause', methods=['POST'])
 def control_pause():
+    """Handles pause requests for the current playback session."""
     global is_playing
     
     if not mpv.get_playback_status().get('is_mpv_running'):
@@ -327,6 +332,7 @@ def control_pause():
 
 @app.route('/api/control/toggle_pause', methods=['POST'])
 def control_toggle_pause():
+    """Toggles between play and pause states."""
     global is_playing
     
     if not mpv.get_playback_status().get('is_mpv_running'):
@@ -343,6 +349,7 @@ def control_toggle_pause():
 
 @app.route('/api/control/stop', methods=['POST'])
 def control_stop():
+    """Stops playback and resets playback state."""
     global is_playing, current_media_index
     if mpv.stop():
         is_playing = False
@@ -356,6 +363,10 @@ def control_stop():
         return jsonify({"error": "Failed to stop playback."}), 500
 
 def _play_next_or_prev(direction, from_auto_advance=False):
+    """
+    Advances to the next or previous track in the playlist, depending on direction.
+    Handles both manual and auto-advance scenarios.
+    """
     global current_media_index, is_playing, media_playlist, loop_playlist, current_loop_mode
 
     # Use MPlayer's native playlist navigation if in playlist mode and MPlayer is running
@@ -438,7 +449,7 @@ def _play_next_or_prev(direction, from_auto_advance=False):
         return jsonify({"error": f"MPlayer could not load file '{file_to_play}' for {direction}. Playback stopped."}), 500
 
 def get_playlist_data_for_response():
-    """Helper function to get current playlist data, callable by other routes for immediate refresh."""
+    """Helper to assemble current playlist and playback state for API responses."""
     global current_media_index, is_playing, media_playlist, current_loop_mode
 
     # Get the latest status from MPlayer
@@ -494,14 +505,17 @@ def get_playlist_data_for_response():
 
 @app.route('/api/control/next', methods=['POST'])
 def control_next():
+    """API endpoint to advance to the next track."""
     return _play_next_or_prev("next")
 
 @app.route('/api/control/previous', methods=['POST'])
 def control_previous():
+    """API endpoint to return to the previous track."""
     return _play_next_or_prev("previous")
 
 @app.route('/api/playlist/set_next', methods=['POST'])
 def set_next_track():
+    """Moves a specified file to play next in the playlist order."""
     global media_playlist, current_media_index, is_playing, current_loop_mode
     data = request.get_json()
     if not data or 'filename' not in data:
@@ -543,6 +557,7 @@ def set_next_track():
 
 @app.route('/api/settings/loop', methods=['POST'])
 def set_loop():
+    """Legacy endpoint for toggling playlist loop (not used with MPlayer)."""
     global loop_playlist
     data = request.get_json()
     if data and 'loop' in data and isinstance(data['loop'], bool):
@@ -553,6 +568,7 @@ def set_loop():
 
 @app.route('/api/settings/loop_mode', methods=['POST'])
 def set_loop_mode():
+    """Sets the loop mode for playback (none, file, or playlist)."""
     global current_loop_mode, loop_playlist, media_playlist, current_media_index, is_playing
     data = request.get_json()
     if not data or 'mode' not in data:
@@ -586,12 +602,13 @@ def set_loop_mode():
 
 @app.route('/api/control/loop_file', methods=['POST'])
 def loop_current_file():
-    # MPlayer doesn't support looping in this implementation
+    """Not supported: MPlayer does not support single-file loop in this implementation."""
     logger.warning("Loop file not supported in MPlayer implementation.")
     return jsonify({"warning": "Loop file not supported in this player implementation."}), 200
 
 @app.route('/api/playlist/delete', methods=['POST'])
 def api_playlist_delete():
+    """Deletes a file from the playlist and disk."""
     global media_playlist, current_media_index, is_playing
 
     try:
@@ -664,6 +681,7 @@ def api_playlist_delete():
 
 @app.route('/api/playlist/reorder', methods=['POST'])
 def api_playlist_reorder():
+    """Reorders the playlist based on the provided new order."""
     global media_playlist
     
     try:
@@ -699,6 +717,7 @@ def api_playlist_reorder():
         return jsonify({"error": str(e)}), 500
 @app.teardown_appcontext
 def teardown_mpv(exception=None):
+    """Performs cleanup of the MPlayer process on Flask app context teardown."""
     pass
 
 # Synchronize playlist after loading and before starting app
@@ -706,12 +725,14 @@ synchronize_playlist_with_uploads()
 
 import atexit
 def cleanup_on_exit():
+    """Ensures MPlayer is terminated when the Flask application exits."""
     logger.info("Flask application is exiting. Terminating MPlayer.")
     mpv.terminate_player()
 atexit.register(cleanup_on_exit)
 
 @app.route('/api/mplayer/restart', methods=['POST'])
 def api_mplayer_restart():
+    """Restarts the MPlayer process via API call."""
     try:
         logger.info("Attempting to restart MPlayer...")
         mpv.terminate_player()  # Stop the current player instance

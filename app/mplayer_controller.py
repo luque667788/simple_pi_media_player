@@ -2,30 +2,30 @@ import subprocess
 import os
 import time
 import logging
-from dotenv import load_dotenv # Add this import
+from dotenv import load_dotenv # Environment variable management
 
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 MPLAYER_LOG_PATH = os.path.join(PROJECT_ROOT, "mplayer.log")
-MPLAYER_FIFO_PATH = os.path.join(PROJECT_ROOT, "mplayer.fifo") # Add FIFO path
-load_dotenv(os.path.join(PROJECT_ROOT, '.env')) # Load .env file
+MPLAYER_FIFO_PATH = os.path.join(PROJECT_ROOT, "mplayer.fifo") # FIFO pipe for MPlayer communication
+load_dotenv(os.path.join(PROJECT_ROOT, '.env')) # Initialize environment configuration
 
 class MPlayerController:
     def __init__(self):
         self.process = None
         self.current_file = None
         self.is_playing_media = False
-        self.is_paused = False  # Track paused state
-        self.loop_mode = 'none'  # Track loop mode: 'none', 'file', 'playlist'
-        self.pending_playlist_config = None # Stores {'files': list_of_files, 'index': start_index}
-        self.file_being_waited_on = None  # Stores the filename of the song whose completion triggers reload
-        self._setup_fifo()  # Set up the FIFO pipe on initialization
+        self.is_paused = False  # Indicates current pause state
+        self.loop_mode = 'none'  # Controls playback repetition: 'none', 'file', or 'playlist'
+        self.pending_playlist_config = None # Stores deferred playlist configuration: {'files': list_of_files, 'index': start_index}
+        self.file_being_waited_on = None  # Tracks the file whose completion triggers playlist reload
+        self._setup_fifo()  # Initialize FIFO communication channel for MPlayer
         logger.info(f"MPlayerController initialized. Log path: {MPLAYER_LOG_PATH}, FIFO path: {MPLAYER_FIFO_PATH}")
 
     def _setup_fifo(self):
-        """Set up the FIFO (named pipe) for communicating with MPlayer in slave mode"""
-        # Remove existing FIFO if it exists
+        """Establishes FIFO (named pipe) for MPlayer slave mode communication."""
+        # Remove any existing FIFO to prevent conflicts
         if os.path.exists(MPLAYER_FIFO_PATH):
             try:
                 os.unlink(MPLAYER_FIFO_PATH)
@@ -34,14 +34,14 @@ class MPlayerController:
                 logger.error(f"Failed to remove existing FIFO pipe: {e}")
         
         try:
-            # Create a new FIFO pipe
+            # Establish new control channel
             os.mkfifo(MPLAYER_FIFO_PATH)
             logger.info(f"Created MPlayer FIFO pipe at: {MPLAYER_FIFO_PATH}")
         except OSError as e:
             logger.error(f"Failed to create FIFO pipe: {e}")
 
     def _send_command(self, command):
-        """Send a command to MPlayer through the FIFO pipe"""
+        """Sends a control command to MPlayer via the FIFO channel."""
         if not self.process or self.process.poll() is not None:
             logger.warning("Tried to send command but MPlayer is not running")
             return False
@@ -57,15 +57,16 @@ class MPlayerController:
             return False
 
     def _ensure_mplayer_executable(self):
+        """Checks for the presence of the MPlayer binary in the system environment."""
         if subprocess.call(["which", "mplayer"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
-            logger.error("MPlayer executable not found in PATH.")
             raise FileNotFoundError("MPlayer executable not found.")
 
     def start_player(self):
-        # Nothing to do here anymore; MPlayer does not use a daemon mode like mpv's --idle
+        """No-op for MPlayer; included for interface compatibility with other controllers."""
         return True
 
     def load_file(self, filepath, transition="fade"):
+        """Loads and starts playback of a specified media file."""
         self._ensure_mplayer_executable()
         if self.process:
             self.terminate_player()
@@ -125,9 +126,9 @@ class MPlayerController:
                 log_size = os.path.getsize(MPLAYER_LOG_PATH)
                 logger.debug(f"MPLAYER_LOG_PATH ({MPLAYER_LOG_PATH}) exists after Popen in load_file. Size: {log_size} bytes.")
                 if log_size == 0:
-                    logger.warning(f"MPLAYER_LOG_PATH is 0 bytes immediately after MPlayer Popen call in load_file.")
+                    logger.warning(f"Diagnostic: Log file exists but contains no data after process initialization.")
             else:
-                logger.warning(f"MPLAYER_LOG_PATH ({MPLAYER_LOG_PATH}) does not exist after Popen in load_file.")
+                logger.warning(f"Critical diagnostic: Expected log file missing after process initialization.")
 
             self.current_file = filepath
             self.is_playing_media = True
@@ -136,13 +137,13 @@ class MPlayerController:
         except Exception as e:
             logger.error(f"Failed to start MPlayer in load_file: {e}")
             if os.path.exists(MPLAYER_LOG_PATH):
-                logger.error(f"MPLAYER_LOG_PATH size on Popen failure in load_file: {os.path.getsize(MPLAYER_LOG_PATH)} bytes.")
+                logger.error(f"Diagnostic data: Log file size at failure point: {os.path.getsize(MPLAYER_LOG_PATH)} bytes.")
             else:
-                logger.error(f"MPLAYER_LOG_PATH does not exist on Popen failure in load_file.")
+                logger.error(f"Diagnostic data: Log file creation failure detected alongside process initialization failure.")
             return False
 
     def play(self):
-        """Resume playback if paused, otherwise starts playback"""
+        """Starts or resumes playback depending on current state."""
         if not self.process or self.process.poll() is not None:
             logger.warning("Cannot play: MPlayer is not running")
             return False
@@ -159,7 +160,7 @@ class MPlayerController:
         return False
 
     def pause(self):
-        """Pause playback if playing"""
+        """Pauses playback, retaining current position."""
         if not self.process or self.process.poll() is not None:
             logger.warning("Cannot pause: MPlayer is not running")
             return False
@@ -175,7 +176,7 @@ class MPlayerController:
         return False
 
     def toggle_pause(self):
-        """Toggle between play and pause states"""
+        """Toggles between play and pause states."""
         if not self.process or self.process.poll() is not None:
             logger.warning("Cannot toggle pause: MPlayer is not running")
             return False
@@ -187,9 +188,11 @@ class MPlayerController:
         return False
 
     def stop(self):
+        """Stops playback and terminates the MPlayer process."""
         return self.terminate_player()
 
     def terminate_player(self):
+        """Terminates the MPlayer process and resets playback state."""
         logger.info("Attempting to terminate MPlayer...")
         if self.process:
             if self.process.poll() is None:
@@ -207,24 +210,24 @@ class MPlayerController:
         return True
 
     def get_playback_status(self):
+        """Returns a dictionary summarizing the current playback and process state."""
         current_mplayer_process_running = self.process is not None and self.process.poll() is None
-        # Store the current file *before* the log check potentially changes it.
-        # This helps determine if the specific file we were waiting for has indeed changed.
+        # Store the current file before log check for accurate change detection
         previous_file_state_before_log_check = self.current_file
 
         if current_mplayer_process_running and self.loop_mode == 'playlist':
             self._check_mplayer_log_for_current_file() # This might update self.current_file
 
-        # Check for pending playlist update
+        # Deferred playlist activation detection system
         if self.pending_playlist_config and self.file_being_waited_on:
             trigger_reload = False
             current_mplayer_process_still_running_after_log_check = self.process is not None and self.process.poll() is None
 
-            if not current_mplayer_process_still_running_after_log_check: # MPlayer stopped
+            if not current_mplayer_process_still_running_after_log_check: # Process termination trigger
                 logger.info(f"MPlayer stopped while waiting for '{self.file_being_waited_on}' to finish. Triggering pending playlist load.")
                 trigger_reload = True
-            # self.current_file is now the file reported by the log (or None if mplayer stopped and was cleaned up)
-            # We compare it against the file we explicitly started waiting for.
+            # Current file state reflects latest log analysis or None if player stopped
+            # Activation occurs when detected file differs from monitored target
             elif self.current_file != self.file_being_waited_on:
                 logger.info(f"Detected file change from '{self.file_being_waited_on}' to '{self.current_file}'. Triggering pending playlist load.")
                 trigger_reload = True
@@ -259,7 +262,7 @@ class MPlayerController:
         }
         
     def _check_mplayer_log_for_current_file(self):
-        """Check MPlayer log to determine the currently playing file"""
+        """Parses the MPlayer log to determine the currently playing file."""
         if not os.path.exists(MPLAYER_LOG_PATH):
             return
             
@@ -277,40 +280,36 @@ class MPlayerController:
                     try:
                         # Extract the full path string after "Playing "
                         full_path_in_log_start_idx = line.find("Playing ") + len("Playing ")
-                        # Find the end of the path. MPlayer might add a period or other characters.
-                        # We'll take everything until the end of the line for now, then use basename.
+                        # Extract full path, accounting for MPlayer's potential path formatting variations
+                        # Initial extraction captures everything after the "Playing " marker
                         potential_full_path = line[full_path_in_log_start_idx:].strip()
 
-                        # More robust cleaning of the path from log
-                        # First, handle any trailing newline characters (actual newlines)
+                        # Path normalization process:
+                        # Step 1: Remove trailing newline characters
                         potential_full_path = potential_full_path.rstrip('\n')
                         
-                        # Then handle the typical trailing period that MPlayer adds
+                        # Step 2: Handle MPlayer's characteristic trailing period
                         if potential_full_path.endswith('.'):
                             potential_full_path = potential_full_path[:-1]
                             
-                        # Handle MPlayer version info that might be captured as part of the line
+                        # Step 3: Filter out any MPlayer version information
                         if "MPlayer" in potential_full_path:
                             potential_full_path = potential_full_path.split("MPlayer")[0].strip()
                         
-                        # Now extract just the filename
+                        # Extract bare filename from normalized path
                         new_file = os.path.basename(potential_full_path)
                         
-                        # Verify this is a real file (sanity check)
-                        # Construct the expected full path on disk for verification
+                        # File validation: Construct and verify expected filesystem location
+                        # Ensures the extracted filename corresponds to an actual media file
                         expected_disk_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', new_file)
                         if os.path.exists(expected_disk_path):
-                            # Check if the current file has changed
+                            # Update current file if a change is detected
                             if new_file != self.current_file:
                                 logger.info(f"File change detected in MPlayer log: {new_file} (was: {self.current_file})")
                                 self.current_file = new_file
                             break 
                         else:
-                            # This is where the "Found filename in log that doesn't exist" warning originates.
-                            # If new_file is just the basename, and it's not found, the issue is that
-                            # MPlayer is reporting a file that truly isn't in the uploads folder,
-                            # or the PROJECT_ROOT or 'app/uploads' path components are incorrect,
-                            # or new_file itself is still malformed (e.g. hidden characters not stripped).
+                            # Diagnostic: Warn if log-reported file does not exist on disk
                             logger.warning(f"Found filename in log '{new_file}' (from path '{potential_full_path}') that doesn't exist at expected location '{expected_disk_path}'")
                     except Exception as e:
                         logger.error(f"Error parsing filename from log line: {line.strip()}: {e}")
@@ -319,6 +318,7 @@ class MPlayerController:
             logger.error(f"Error checking MPlayer log for current file: {e}")
 
     def load_playlist(self, playlist_files, start_index=0):
+        """Loads a playlist and starts playback according to the current loop mode."""
         if not playlist_files:
             logger.warning("Empty playlist provided to load_playlist. Stopping player.")
             self.stop() 
@@ -326,32 +326,26 @@ class MPlayerController:
             self.file_being_waited_on = None
             return True 
 
-        # The writing of temp_playlist.txt is now fully handled by _execute_playlist_load.
-        # It will use playlist_files and start_index to create the correctly ordered temp file.
-
+        # Playlist file generation is handled by _execute_playlist_load
         current_active_loop_mode = self.loop_mode 
 
         if current_active_loop_mode == 'playlist':
             if self.is_playing_media and self.current_file:
-                # Playlist mode, and a file is currently playing.
-                # Defer the actual MPlayer restart until the current song finishes.
+                # Queue playlist for activation after current file finishes
                 self.pending_playlist_config = {'files': list(playlist_files), 'index': start_index}
                 self.file_being_waited_on = self.current_file 
                 logger.info(f"Playlist updated. Changes for {len(playlist_files)} files (target start index {start_index}) will apply after current file '{self.current_file}' finishes.")
-                return True
             else:
-                # Playlist mode, but nothing is playing or current_file is not set.
+                # Immediate execution path: No active playback to preserve
                 logger.info("Playlist mode: No current file playing or player stopped. Starting new playlist immediately.")
                 return self._execute_playlist_load(playlist_files, start_index)
         else:
-            # Not in playlist loop mode (e.g., 'none' or 'file'). 
+            # Standard playlist loading for non-playlist loop modes
             logger.info(f"Current mode is '{current_active_loop_mode}'. Loading new playlist. Player will operate according to self.loop_mode ('{self.loop_mode}') for this load.")
-            
-            # _execute_playlist_load will handle terminating any old process if necessary
-            # and will use the current self.loop_mode to configure MPlayer.
             return self._execute_playlist_load(playlist_files, start_index)
 
     def _execute_playlist_load(self, playlist_files, start_index=0):
+        """Executes the loading and playback of a playlist, handling file validation and process management."""
         if self.process and self.process.poll() is None:
             logger.info("Terminating existing MPlayer before executing new playlist load.")
             self.terminate_player()
@@ -375,9 +369,10 @@ class MPlayerController:
             start_index = 0
         
         if playlist_files:
+            # Reorder playlist to start at the specified index
             raw_ordered_list = playlist_files[start_index:] + playlist_files[:start_index]
             
-            # Filter out non-existent files
+            # Validate existence of each file in the playlist
             for f_basename in raw_ordered_list:
                 if os.path.exists(os.path.join(PROJECT_ROOT, 'app', 'uploads', f_basename)):
                     ordered_files_for_tempfile_basenames.append(f_basename)
@@ -401,9 +396,9 @@ class MPlayerController:
                 for idx, file_item_basename in enumerate(ordered_files_for_tempfile_basenames):
                     full_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', file_item_basename)
                     if idx < len(ordered_files_for_tempfile_basenames) - 1:
-                        f.write(f"{full_path}\n")  # Use an actual newline character
+                        f.write(f"{full_path}\n")  # Standard line separator
                     else:
-                        f.write(f"{full_path}")
+                        f.write(f"{full_path}")  # No trailing newline for final entry
             logger.info(f"Successfully wrote {len(ordered_files_for_tempfile_basenames)} items to '{temp_playlist_path}', starting with '{actual_start_filename_basename}'.")
         except Exception as e:
             logger.error(f"Failed to write temporary playlist file '{temp_playlist_path}': {e}")
@@ -435,40 +430,41 @@ class MPlayerController:
             cmd.extend(["-playlist", temp_playlist_path])
 
         try:
-            initial_log_line_for_current_file = f"Playing {actual_start_file_full_path}.\n"  # Use actual newline character
+            # Pre-populate log with initial file marker for immediate status detection
+            initial_log_line_for_current_file = f"Playing {actual_start_file_full_path}.\n"
             
             with open(MPLAYER_LOG_PATH, "w") as log_file:
                 log_file.write(initial_log_line_for_current_file)
                 logger.debug(f"Attempting to start MPlayer with command: {' '.join(cmd)}")
                 self.process = subprocess.Popen(cmd, stdout=log_file, stderr=subprocess.STDOUT)
             
-            time.sleep(0.2) 
+            time.sleep(0.2)  # Brief initialization delay for process stability
 
             if self.process and self.process.poll() is None:
+                # Process successfully launched; update state
                 self.current_file = actual_start_filename_basename
                 self.is_playing_media = True
                 self.is_paused = False
                 logger.info(f"MPlayer started/restarted. Current file set to: '{self.current_file}', Playing: {self.is_playing_media}, Mode: {self.loop_mode}")
             else:
+                # Process launch failure; reset state and abort
                 logger.error("MPlayer process failed to start or exited immediately.")
-                # ... (log reading logic from previous thought if desired) ...
                 self.current_file = None 
                 self.is_playing_media = False
                 self.process = None 
                 return False
             return True
         except Exception as e:
+            # Exception handling for process launch failures
             logger.error(f"Critical error in _execute_playlist_load: {e}", exc_info=True)
-            # ... (cleanup logic from previous thought if desired) ...
             self.process = None
             self.current_file = None
             self.is_playing_media = False
             return False
 
     def playlist_next(self):
-        """Advance to the next item in the playlist if in playlist mode using MPlayer's native playlist navigation."""
+        """Advances to the next playlist item using MPlayer's native navigation."""
         if self.loop_mode == 'playlist' and self.process and self.process.poll() is None:
-            # Use MPlayer's native playlist navigation
             logger.info("Sending pt_step 1 to MPlayer for next track.")
             return self._send_command("pt_step 1")
         else:
@@ -476,7 +472,7 @@ class MPlayerController:
             return False
 
     def playlist_prev(self):
-        """Go to the previous item in the playlist if in playlist mode using MPlayer's native playlist navigation."""
+        """Returns to the previous playlist item using MPlayer's native navigation."""
         if self.loop_mode == 'playlist' and self.process and self.process.poll() is None:
             logger.info("Sending pt_step -1 to MPlayer for previous track.")
             return self._send_command("pt_step -1")
@@ -486,32 +482,28 @@ class MPlayerController:
 
     def set_loop_mode(self, mode):
         """
-        Set the loop mode for MPlayer.
-        
+        Sets the playback loop mode for MPlayer.
         Args:
-            mode (str): The loop mode ('none', 'file', or 'playlist').
-            
+            mode (str): Desired loop mode ('none', 'file', or 'playlist').
         Returns:
-            bool: True if the mode was set successfully, False otherwise.
+            bool: True if mode was set successfully, False otherwise.
         """
         if mode not in ['none', 'file', 'playlist']:
             logger.warning(f"Invalid loop mode specified: {mode}. Must be 'none', 'file', or 'playlist'.")
             return False
             
         if self.loop_mode == mode:
-            # logger.info(f"Loop mode is already {mode}. No change made.") # Optional: reduce noise
+            # No action needed if already set
             return True
 
         logger.info(f"Setting loop mode from '{self.loop_mode}' to '{mode}'.")
         self.loop_mode = mode
         
-        # The new loop mode will be applied the next time media is loaded 
-        # (e.g., via load_file, load_playlist, or when a pending playlist config is applied).
-        # No immediate player restart is done here to keep this method simple.
-        # If an immediate change is desired while playing, the user/frontend might need to trigger a reload.
+        # Note: New loop mode is applied on next media load
         return True
 
     def get_loop_status(self):
+        """Returns the current loop mode status as a dictionary."""
         return {
             "loop_file": self.loop_mode == 'file',
             "loop_playlist": self.loop_mode == 'playlist',

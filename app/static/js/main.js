@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- DOM Elements ---
+    // --- DOM Element References ---
     const mediaUploadInput = document.getElementById('mediaUploadInput');
     const uploadButton = document.getElementById('uploadButton');
     const uploadStatus = document.getElementById('uploadStatus');
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loopCheckbox = document.getElementById('loopCheckbox');
     const loopModeSelect = document.getElementById('loopModeSelect');
     
-    // Edit mode elements
+    // Playlist editing controls
     const editPlaylistButton = document.getElementById('editPlaylistButton');
     const savePlaylistButton = document.getElementById('savePlaylistButton');
 
@@ -25,10 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshStatusButton = document.getElementById('refreshStatusButton');
     const restartMpvButton = document.getElementById('restartMpvButton');
     
-    // Global state
+    // Application state
     let editMode = false;
 
-    // --- API Helper ---
+    // --- API Communication Helper ---
     async function fetchAPI(endpoint, method = 'GET', body = null) {
         const options = {
             method: method,
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- UI Update Functions ---
+    // --- UI Update Logic ---
     function updatePlaylistUI(playlist = [], currentFile = null, loop_mode = 'none') {
         playlistUl.innerHTML = '';
         if (!Array.isArray(playlist)) {
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Helper function to determine the position for inserting the dragged element
+    // Helper to determine drag-and-drop insertion point
     function getDragAfterElement(container, y) {
         const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')];
         
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mediaUploadInput.disabled = editMode || data.currentFile;
     }
 
-    // --- Edit Mode Functions ---
+    // --- Playlist Edit Mode Management ---
     function enableEditMode() {
         editMode = true;
         editPlaylistButton.style.display = 'none';
@@ -235,13 +235,13 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchAndRefreshStatus();
     }
     
-    // Function to gather playlist order from the UI
+    // Retrieve playlist order from UI for reordering
     function getPlaylistOrder() {
         const items = [...playlistUl.querySelectorAll('li')];
         return items.map(item => item.dataset.filename);
     }
     
-    // --- Event Handlers & API Calls ---
+    // --- Event Handlers and API Integration ---
     async function fetchAndRefreshStatus() {
         const data = await fetchAPI('/playlist');
         if (data) {
@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Add event listeners for edit/save buttons
+    // Playlist edit/save button event handlers
     editPlaylistButton.addEventListener('click', async () => {
         // First stop the player if it's running
         const response = await fetchAPI('/control/stop', 'POST');
@@ -400,14 +400,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Initial Load ---
+    // --- Initial UI Load ---
     fetchAndRefreshStatus();
     
-    // Track the last known state to detect changes
+    // Track last known playback state for change detection
     let lastKnownFile = null;
     let lastKnownPlayingState = false;
     
-    // Set up polling for UI updates
+    // Periodic polling for UI state updates
     setInterval(async () => {
         const status = await fetchAPI('/playlist');
         if (!status) return;
@@ -423,6 +423,6 @@ document.addEventListener('DOMContentLoaded', () => {
             lastKnownFile = status.currentFile;
             lastKnownPlayingState = status.isPlaying;
         }
-    }, 3000); // Poll every 3 seconds to stay more responsive
+    }, 3000); // Poll every 3 seconds for responsiveness
 
 });
