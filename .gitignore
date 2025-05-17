@@ -1,2 +1,5 @@
 __pycache__/
 *.log
+playlist.json
+tempplaylist.json
+*.fifo
