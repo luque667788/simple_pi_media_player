@@ -365,7 +365,7 @@ class MPlayerController:
                     full_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', file_item)
                     if not os.path.exists(full_path):
                         logger.warning(f"File {full_path} in reordered playlist does not exist. MPlayer might skip it or error if passed directly.")
-                    f.write(f"{full_path}\\n")
+                    f.write(f"{full_path}\n") # Write actual newline
             logger.info(f"Successfully wrote reordered playlist ({len(reordered_playlist_for_file)} items, starting with {actual_start_filename}) to '{temp_playlist_path}'.")
         except Exception as e:
             logger.error(f"Failed to write reordered temporary playlist file '{temp_playlist_path}': {e}")
@@ -403,9 +403,16 @@ class MPlayerController:
                 return False
             cmd.extend(paths_for_cmd)
 
-        elif self.loop_mode == 'none': # Play playlist once
-            logger.info("Configuring MPlayer to play playlist once (using -playlist arg with reordered temp_playlist.txt).")
-            cmd.extend(["-playlist", temp_playlist_path]) # temp_playlist.txt starts with actual_start_filename
+        elif self.loop_mode == 'none': # Play one single file once, then stop/end.
+            logger.info(f"Configuring MPlayer to play single file once: '{actual_start_filename}'.")
+            file_to_play_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', actual_start_filename)
+            if os.path.exists(file_to_play_path):
+                cmd.append(file_to_play_path) # Add only the single file to play, no -loop, no -playlist
+            else:
+                logger.error(f"None loop mode: File '{file_to_play_path}' for single play not found. Aborting MPlayer start.")
+                self.current_file = None
+                self.is_playing_media = False
+                return False
 
         elif self.loop_mode == 'file':
             logger.info(f"Configuring MPlayer for single file loop: '{actual_start_filename}' (file on CLI with -loop 0).")

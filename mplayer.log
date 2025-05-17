@@ -1,12 +1,12 @@
-Playing /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/20250513_130757.mp4\nMPlayer SVN-r38674-14 (C) 2000-2025 MPlayer Team
+Playing /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/VID-20250409-WA0025.mp4\nMPlayer SVN-r38674-14 (C) 2000-2025 MPlayer Team
 
-Playing /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/20250513_130757.mp4.
+Playing /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/VID-20250409-WA0025.mp4.
 libavformat version 61.7.100 (external)
 libavformat file format detected.
-[mov,mp4,m4a,3gp,3g2,mj2 @ 0x7fe786c744a0]Protocol name not provided, cannot determine if input is local or a network protocol, buffers and access patterns cannot be configured optimally without knowing the protocol
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0x7f5e692744a0]Protocol name not provided, cannot determine if input is local or a network protocol, buffers and access patterns cannot be configured optimally without knowing the protocol
 [lavf] stream 0: video (h264), -vid 0
-[lavf] stream 1: audio (aac), -aid 0, -alang eng
-VIDEO:  [H264]  1920x1080  24bpp  30.000 fps  16925.6 kbps (2066.1 kbyte/s)
+[lavf] stream 1: audio (aac), -aid 0, -alang und
+VIDEO:  [H264]  1280x720  24bpp  59.940 fps  2799.2 kbps (341.7 kbyte/s)
 X11 error: BadMatch (invalid parameter attributes)
 ==========================================================================
 Opening video decoder: [ffmpeg] FFmpeg's libavcodec codec family
@@ -16,23 +16,43 @@ Selected video codec: [ffh264] vfm: ffmpeg (FFmpeg H.264)
 Clip info:
  major_brand: mp42
  minor_version: 0
- compatible_brands: isommp42
- creation_time: 2025-05-13T11:08:24.000000Z
- com.android.version: 14
- com.android.capture.fps: 30.000000
+ compatible_brands: mp42isom
 Load subtitles in /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/
 ==========================================================================
 Opening audio decoder: [ffmpeg] FFmpeg/libavcodec audio decoders
-AUDIO: 48000 Hz, 2 ch, floatle, 256.0 kbit/8.33% (ratio: 32001->384000)
+AUDIO: 44100 Hz, 2 ch, floatle, 67.9 kbit/2.41% (ratio: 8489->352800)
 Selected audio codec: [ffaac] afm: ffmpeg (FFmpeg AAC (MPEG-2/MPEG-4 Audio))
 ==========================================================================
-AO: [pulse] 48000Hz 2ch floatle (4 bytes per sample)
+AO: [pulse] 44100Hz 2ch floatle (4 bytes per sample)
 Starting playback...
 Movie-Aspect is undefined - no prescaling applied.
-VO: [x11] 1920x1080 => 1920x1080 Planar YV12 
-[swscaler @ 0x7fe786db0a80]using unscaled yuv420p -> bgra special converter
+VO: [x11] 1280x720 => 1280x720 Planar YV12 
+[swscaler @ 0x7f5e69349a80]using unscaled yuv420p -> bgra special converter
 
 
-MPlayer interrupted by signal 15 in module: decode video
+Playing /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/Screencast From 2025-02-06 10-33-00(1).mp4.
+libavformat file format detected.
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0x7f5e692744a0]Protocol name not provided, cannot determine if input is local or a network protocol, buffers and access patterns cannot be configured optimally without knowing the protocol
+[lavf] stream 0: video (h264), -vid 0
+VIDEO:  [H264]  1917x895  24bpp  60.000 fps  6055.1 kbps (739.1 kbyte/s)
+==========================================================================
+Opening video decoder: [ffmpeg] FFmpeg's libavcodec codec family
+Selected video codec: [ffh264] vfm: ffmpeg (FFmpeg H.264)
+==========================================================================
+Clip info:
+ major_brand: mp42
+ minor_version: 0
+ compatible_brands: mp42mp41isomiso2
+ creation_time: 2025-02-06T09:33:00.000000Z
+ encoder: VA-API H.264 Low Power Encoder in Intel(R) Gen Graphics
+Load subtitles in /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/
+Audio: no sound
+Starting playback...
+Movie-Aspect is 2.14:1 - prescaling to correct movie aspect.
+VO: [x11] 1917x895 => 1917x896 Planar YV12 
 
-Exiting... (Quit)
+
+MPlayer interrupted by signal 2 in module: filter video
+
+
+MPlayer interrupted by signal 15 in module: filter video
