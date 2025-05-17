@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextButton = document.getElementById('nextButton');
     const loopCheckbox = document.getElementById('loopCheckbox');
     const loopModeSelect = document.getElementById('loopModeSelect');
+    
+    // Edit mode elements
+    const editPlaylistButton = document.getElementById('editPlaylistButton');
+    const savePlaylistButton = document.getElementById('savePlaylistButton');
 
     const playlistUl = document.getElementById('playlistUl');
 
@@ -20,6 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const mpvProcessStatusSpan = document.getElementById('mpvProcessStatus');
     const refreshStatusButton = document.getElementById('refreshStatusButton');
     const restartMpvButton = document.getElementById('restartMpvButton');
+    
+    // Global state
+    let editMode = false;
 
     // --- API Helper ---
     async function fetchAPI(endpoint, method = 'GET', body = null) {
@@ -61,37 +68,61 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Playlist data is not an array:", playlist);
             playlist = [];
         }
+        
+        // Add or remove edit-mode class based on current mode
+        if (editMode) {
+            playlistUl.classList.add('edit-mode');
+        } else {
+            playlistUl.classList.remove('edit-mode');
+        }
+        
         playlist.forEach((item, index) => {
             const li = document.createElement('li');
+            li.dataset.filename = item;
+            
+            if (editMode) {
+                // In edit mode, add drag handle and make item draggable
+                li.draggable = true;
+                li.classList.add('draggable');
+                
+                const dragHandle = document.createElement('span');
+                dragHandle.className = 'drag-handle';
+                li.appendChild(dragHandle);
+                
+                // Drag event listeners
+                li.addEventListener('dragstart', () => {
+                    li.classList.add('dragging');
+                });
+                
+                li.addEventListener('dragend', () => {
+                    li.classList.remove('dragging');
+                });
+            }
 
             // Play button/text
             const playSpan = document.createElement('span');
             playSpan.textContent = item;
             playSpan.className = 'play-title';
+            
             if (item === currentFile) {
                 li.classList.add('playing');
             }
-            playSpan.addEventListener('click', () => playSpecificFile(item));
-
-            // Set-next button
-            const nextButton = document.createElement('button');
-            nextButton.textContent = 'Play Next';
-            nextButton.className = 'play-next-btn';
-            nextButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                setNextTrack(item);
-            });
-            // Show/hide Play Next button based on loop_mode
-            if (loop_mode === 'playlist') {
-                nextButton.style.display = '';
-            } else {
-                nextButton.style.display = 'none';
+            
+            // Only add click event in non-edit mode
+            if (!editMode) {
+                playSpan.addEventListener('click', () => playSpecificFile(item));
             }
 
-            // Add delete button
+            // Add delete button (only visible in edit mode or if nothing is playing)
             const deleteButton = document.createElement('button');
             deleteButton.textContent = 'Delete';
             deleteButton.className = 'delete-btn';
+            
+            // Only show delete button in edit mode or if nothing is playing
+            if (!editMode && currentFile) {
+                deleteButton.style.display = 'none';
+            }
+            
             deleteButton.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (confirm(`Delete "${item}" from playlist and disk?`)) {
@@ -107,12 +138,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            li.dataset.filename = item;
             li.appendChild(playSpan);
-            li.appendChild(nextButton);
-            li.appendChild(deleteButton); // Add the delete button
+            
+            // Don't show Play Next button in either mode - it's no longer needed
+            // as per the requirements
+            
+            li.appendChild(deleteButton);
             playlistUl.appendChild(li);
         });
+        
+        // Add drag-and-drop event listeners to the playlist in edit mode
+        if (editMode) {
+            playlistUl.addEventListener('dragover', e => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(playlistUl, e.clientY);
+                const draggable = document.querySelector('.dragging');
+                if (draggable) { // Check if draggable exists
+                    if (afterElement == null) {
+                        playlistUl.appendChild(draggable);
+                    } else {
+                        playlistUl.insertBefore(draggable, afterElement);
+                    }
+                } else {
+                    // console.warn('Dragover event fired but no draggable element found.');
+                }
+            });
+        }
+    }
+    
+    // Helper function to determine the position for inserting the dragged element
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     function updateStatusUI(data) {
@@ -128,18 +195,52 @@ document.addEventListener('DOMContentLoaded', () => {
             loopModeSelect.value = data.loop_mode;
         }
         mpvProcessStatusSpan.textContent = data.mpv_is_running ? "Running" : "Not Running/Error";
+        
         // Update playlist UI, passing loop_mode
         updatePlaylistUI(data.playlist, data.currentFile, data.loop_mode);
-        // Show/hide global next/prev buttons based on loop_mode
-        if (data.loop_mode === 'playlist') {
+        
+        // Show/hide global next/prev buttons based on loop_mode and not in edit mode
+        if (data.loop_mode === 'playlist' && !editMode) {
             prevButton.style.display = '';
             nextButton.style.display = '';
         } else {
             prevButton.style.display = 'none';
             nextButton.style.display = 'none';
         }
+        
+        // Disable/enable control buttons based on edit mode
+        const controlButtons = [playButton, pauseButton, togglePauseButton, stopButton, 
+                               prevButton, nextButton, restartMpvButton];
+        controlButtons.forEach(button => {
+            button.disabled = editMode;
+        });
+        
+        // Disable/enable upload section based on edit mode and if anything is playing
+        uploadButton.disabled = editMode || data.currentFile;
+        mediaUploadInput.disabled = editMode || data.currentFile;
     }
 
+    // --- Edit Mode Functions ---
+    function enableEditMode() {
+        editMode = true;
+        editPlaylistButton.style.display = 'none';
+        savePlaylistButton.style.display = 'inline-block';
+        fetchAndRefreshStatus();
+    }
+    
+    function disableEditMode() {
+        editMode = false;
+        editPlaylistButton.style.display = 'inline-block';
+        savePlaylistButton.style.display = 'none';
+        fetchAndRefreshStatus();
+    }
+    
+    // Function to gather playlist order from the UI
+    function getPlaylistOrder() {
+        const items = [...playlistUl.querySelectorAll('li')];
+        return items.map(item => item.dataset.filename);
+    }
+    
     // --- Event Handlers & API Calls ---
     async function fetchAndRefreshStatus() {
         const data = await fetchAPI('/playlist');
@@ -268,6 +369,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 uploadStatus.className = 'error-message';
             }
             setTimeout(fetchAndRefreshStatus, 1500); // Give MPlayer time to restart before refreshing status
+        }
+    });
+
+    // Add event listeners for edit/save buttons
+    editPlaylistButton.addEventListener('click', async () => {
+        // First stop the player if it's running
+        const response = await fetchAPI('/control/stop', 'POST');
+        if (response) {
+            uploadStatus.textContent = 'Entered edit mode. Player stopped.';
+            uploadStatus.className = 'success-message';
+            enableEditMode();
+        }
+    });
+    
+    savePlaylistButton.addEventListener('click', async () => {
+        const newOrder = getPlaylistOrder();
+        uploadStatus.textContent = 'Saving new playlist order...';
+        uploadStatus.className = '';
+        
+        // Send the new playlist order to the backend
+        const response = await fetchAPI('/playlist/reorder', 'POST', { order: newOrder });
+        if (response && response.status === "reordered") {
+            uploadStatus.textContent = 'Playlist order saved successfully.';
+            uploadStatus.className = 'success-message';
+            disableEditMode();
+        } else {
+            uploadStatus.textContent = response?.error || 'Failed to save playlist order.';
+            uploadStatus.className = 'error-message';
         }
     });
 

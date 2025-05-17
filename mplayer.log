@@ -1,9 +1,9 @@
-MPlayer SVN-r38674-14 (C) 2000-2025 MPlayer Team
+Playing /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/20250513_130757.mp4\nMPlayer SVN-r38674-14 (C) 2000-2025 MPlayer Team
 
 Playing /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/20250513_130757.mp4.
 libavformat version 61.7.100 (external)
 libavformat file format detected.
-[mov,mp4,m4a,3gp,3g2,mj2 @ 0x7f3f3e8744a0]Protocol name not provided, cannot determine if input is local or a network protocol, buffers and access patterns cannot be configured optimally without knowing the protocol
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0x7fe786c744a0]Protocol name not provided, cannot determine if input is local or a network protocol, buffers and access patterns cannot be configured optimally without knowing the protocol
 [lavf] stream 0: video (h264), -vid 0
 [lavf] stream 1: audio (aac), -aid 0, -alang eng
 VIDEO:  [H264]  1920x1080  24bpp  30.000 fps  16925.6 kbps (2066.1 kbyte/s)
@@ -30,7 +30,7 @@ AO: [pulse] 48000Hz 2ch floatle (4 bytes per sample)
 Starting playback...
 Movie-Aspect is undefined - no prescaling applied.
 VO: [x11] 1920x1080 => 1920x1080 Planar YV12 
-[swscaler @ 0x7f3f3ea90a80]using unscaled yuv420p -> bgra special converter
+[swscaler @ 0x7fe786db0a80]using unscaled yuv420p -> bgra special converter
 
 
 MPlayer interrupted by signal 15 in module: decode video

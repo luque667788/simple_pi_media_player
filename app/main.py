@@ -563,55 +563,112 @@ def loop_current_file():
     return jsonify({"warning": "Loop file not supported in this player implementation."}), 200
 
 @app.route('/api/playlist/delete', methods=['POST'])
-def delete_file_from_playlist():
+def api_playlist_delete():
     global media_playlist, current_media_index, is_playing
-    data = request.get_json()
-    if not data or 'filename' not in data:
-        return jsonify({"error": "Filename missing in request."}), 400
 
-    filename = data['filename']
-    if filename not in media_playlist:
-        return jsonify({"error": f"File '{filename}' not found in playlist."}), 404
-
-    idx = media_playlist.index(filename)
-    media_playlist.pop(idx)
-
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     try:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            logger.info(f"Deleted file from disk: {file_path}")
+        data = request.get_json()
+        if not data or 'filename' not in data:
+            return jsonify({"error": "Missing filename"}), 400
+        
+        filename = data['filename']
+        
+        # Verify that file exists
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        
+        # Check if the file being deleted is currently playing
+        is_deleting_current = False
+        # If we're playing something, check if it's the file we're deleting
+        if is_playing and current_media_index >= 0 and current_media_index < len(media_playlist):
+            is_deleting_current = (media_playlist[current_media_index] == filename)
+        
+        if is_deleting_current:
+            # Stop playback if currently playing
+            mpv.stop()
+            is_playing = False
+            # If there are other files, we'll need to adjust the index
+            if len(media_playlist) > 1:
+                # We'll reset the index to the beginning in update_playlist_after_delete
+                # This will be handled by the playlist code after delete
+                pass
+
+        # Before removing from playlist, get index
+        try:
+            file_index = media_playlist.index(filename)
+        except ValueError:
+            return jsonify({"error": f"File not in playlist: {filename}"}), 400
+        
+        # Remove from playlist
+        media_playlist.remove(filename)
+        
+        # Update index if needed
+        if current_media_index >= file_index:
+            # If we're removing a file before or at the current index, adjust the index
+            current_media_index = max(0, current_media_index - 1) if media_playlist else -1
+        
+        # Save playlist changes
+        save_playlist_to_file()
+        
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                logger.info(f"File deleted: {filename}")
+            else:
+                logger.warning(f"File not found for deletion (but removed from playlist): {filename}")
+        except Exception as e:
+            logger.error(f"Error deleting file {filename}: {str(e)}")
+            return jsonify({"error": f"Error deleting file: {str(e)}"}), 500
+        
+        # Return success response
+        return jsonify({
+            "status": "deleted", 
+            "message": f"File {filename} deleted",
+            "playlist": media_playlist,
+            "currentFile": media_playlist[current_media_index] if 0 <= current_media_index < len(media_playlist) else None,
+            "currentIndex": current_media_index,
+            "isPlaying": is_playing,
+            "mpv_is_running": mpv.is_running
+        })
+        
     except Exception as e:
-        logger.error(f"Failed to delete file {file_path}: {e}")
+        logger.error(f"Error in delete API: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
-    if current_media_index == idx:
-        mpv.stop()
-        is_playing = False
-        current_media_index = -1
-    elif current_media_index > idx:
-        current_media_index -= 1
-
-    save_playlist_to_file()
-    logger.info(f"Deleted '{filename}' from playlist.")
-    return jsonify({"status": "deleted", "filename": filename, "playlist": media_playlist})
-
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    logger.debug(f"Request for uploaded file: {filename}")
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-@app.route('/api/mplayer/restart', methods=['POST'])
-def restart_mplayer_route():
-    logger.info("API call to restart MPlayer.")
-    mpv.terminate_player()
-    time.sleep(0.5)
-    if mpv.start_player():
-        logger.info("MPlayer restarted successfully via API.")
-        return jsonify({"status": "mplayer_restarted"}), 200
-    else:
-        logger.error("Failed to restart MPlayer via API.")
-        return jsonify({"error": "Failed to restart MPlayer."}), 500
-
+@app.route('/api/playlist/reorder', methods=['POST'])
+def api_playlist_reorder():
+    global media_playlist
+    
+    try:
+        data = request.get_json()
+        if not data or 'order' not in data:
+            return jsonify({"error": "Missing order parameter"}), 400
+        
+        new_order = data['order']
+        
+        # Validate that all files in new_order exist in media_playlist
+        if not all(item in media_playlist for item in new_order):
+            return jsonify({"error": "New order contains files not in the current playlist"}), 400
+            
+        # Validate that all files in media_playlist exist in new_order
+        if not all(item in new_order for item in media_playlist):
+            return jsonify({"error": "New order is missing files from the current playlist"}), 400
+        
+        # Update the playlist order
+        media_playlist = new_order
+        
+        # Save the updated playlist
+        save_playlist_to_file()
+        
+        # Return success response
+        return jsonify({
+            "status": "reordered",
+            "playlist": media_playlist,
+            "mpv_is_running": mpv.get_playback_status().get('is_mpv_running', False)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in reorder API: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 @app.teardown_appcontext
 def teardown_mpv(exception=None):
     pass
@@ -624,6 +681,21 @@ def cleanup_on_exit():
     logger.info("Flask application is exiting. Terminating MPlayer.")
     mpv.terminate_player()
 atexit.register(cleanup_on_exit)
+
+@app.route('/api/mplayer/restart', methods=['POST'])
+def api_mplayer_restart():
+    try:
+        logger.info("Attempting to restart MPlayer...")
+        mpv.terminate_player()  # Stop the current player instance
+        time.sleep(0.5)  # Give it a moment to release resources
+        # The player will be restarted automatically when the next command requires it (e.g., play)
+        # Or, if you have a specific method to re-initialize or ensure it's ready:
+        # mpv.ensure_player_is_running() # This would be a new method in MPlayerController
+        logger.info("MPlayer restart process initiated. Player will start on next action.")
+        return jsonify({"status": "mplayer_restarted", "message": "MPlayer process will restart on next action."}), 200
+    except Exception as e:
+        logger.error(f"Error restarting MPlayer: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):

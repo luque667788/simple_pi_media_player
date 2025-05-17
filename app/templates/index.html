@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Media Player Control</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/drag-drop.css') }}">
 </head>
 <body>
     <div class="container">
@@ -36,7 +37,13 @@
         </div>
         
         <div class="section" id="playlist-section">
-            <h2>Playlist</h2>
+            <div class="playlist-header">
+                <h2>Playlist</h2>
+                <div>
+                    <button id="editPlaylistButton">Edit Playlist</button>
+                    <button id="savePlaylistButton" style="display: none;">Save Playlist</button>
+                </div>
+            </div>
             <ul id="playlistUl"></ul>
         </div>
 

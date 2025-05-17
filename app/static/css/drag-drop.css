@@ -1,0 +1,54 @@
+/* Drag and Drop Styles */
+.draggable {
+    cursor: grab;
+}
+
+.draggable:active {
+    cursor: grabbing;
+}
+
+.drag-handle {
+    margin-right: 10px;
+    color: #aaa;
+    cursor: grab;
+}
+
+.drag-handle:hover {
+    color: #666;
+}
+
+.drag-handle::before {
+    content: "≡";
+    font-size: 18px;
+}
+
+.draggable.dragging {
+    opacity: 0.5;
+}
+
+.edit-mode li {
+    background-color: #f9f9f9;
+    border: 1px dashed #ccc !important;
+    margin-bottom: 5px;
+    border-radius: 4px;
+}
+
+#editPlaylistButton, #savePlaylistButton {
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+#savePlaylistButton {
+    background-color: #28a745;
+}
+
+#savePlaylistButton:hover {
+    background-color: #218838;
+}
+
+.playlist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}

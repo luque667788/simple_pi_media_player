@@ -268,12 +268,12 @@ class MPlayerController:
                 lines = log_file.readlines()
             
             if not lines:
-                logger.warning("MPlayer log file is empty")
+                # logger.warning("MPlayer log file is empty") # Can be too noisy if checked frequently
                 return
                 
             # Scan the log from the end to find the most recently played file
             for line in reversed(lines):
-                if "Playing " in line and "/uploads/" in line:
+                if "Playing " in line and "/uploads/" in line: # Ensure it's one of our uploaded files
                     try:
                         # Extract the full path string after "Playing "
                         full_path_in_log_start_idx = line.find("Playing ") + len("Playing ")
@@ -296,13 +296,10 @@ class MPlayerController:
                             if new_file != self.current_file:
                                 logger.info(f"File change detected in MPlayer log: {new_file} (was: {self.current_file})")
                                 self.current_file = new_file
+                                # If a file change is detected and we were waiting for a specific file to end (for pending playlist),
+                                # this current_file update is what get_playback_status will use to trigger the pending load.
                             break 
                         else:
-                            # This is where the "Found filename in log that doesn't exist" warning originates.
-                            # If new_file is just the basename, and it's not found, the issue is that
-                            # MPlayer is reporting a file that truly isn't in the uploads folder,
-                            # or the PROJECT_ROOT or 'app/uploads' path components are incorrect,
-                            # or new_file itself is still malformed (e.g. hidden characters not stripped).
                             logger.warning(f"Found filename in log '{new_file}' (from path '{potential_full_path}') that doesn't exist at expected location '{expected_disk_path}'")
                     except Exception as e:
                         logger.error(f"Error parsing filename from log line: {line.strip()}: {e}")
@@ -314,150 +311,146 @@ class MPlayerController:
         if not playlist_files:
             logger.warning("Empty playlist provided to load_playlist. Stopping player.")
             self.stop() 
-            self.pending_playlist_config = None # Clear any pending task
+            self.pending_playlist_config = None 
             self.file_being_waited_on = None
             return True 
 
-        # Always write/update the temporary playlist file first.
-        temp_playlist_path = os.path.join(PROJECT_ROOT, "temp_playlist.txt")
-        try:
-            with open(temp_playlist_path, 'w') as f:
-                for file_item in playlist_files:
-                    full_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', file_item)
-                    f.write(f"{full_path}\\n")
-            logger.info(f"Successfully wrote {len(playlist_files)} items to '{temp_playlist_path}'.")
-        except Exception as e:
-            logger.error(f"Failed to write temporary playlist file '{temp_playlist_path}': {e}")
-            return False
-
-        if self.loop_mode == 'playlist':
-            if self.is_playing_media and self.current_file:
-                # Playlist mode, and a file is currently playing.
-                # Defer the actual MPlayer restart until the current song finishes.
-                self.pending_playlist_config = {'files': list(playlist_files), 'index': start_index}
-                self.file_being_waited_on = self.current_file 
-                logger.info(f"Playlist updated. Changes for {len(playlist_files)} files (target start index {start_index}) will apply after current file '{self.current_file}' finishes.")
-                return True
-            else:
-                # Playlist mode, but nothing is playing or current_file is not set.
-                logger.info("Playlist mode: No current file playing or player stopped. Starting new playlist immediately.")
-                if self.process and self.process.poll() is not None: self.terminate_player()
-                return self._execute_playlist_load(playlist_files, start_index)
+        # Deferral logic: if media is playing and we are not already waiting for a file to finish
+        # The self.loop_mode for the upcoming playlist is already set by the API before this call.
+        if self.is_playing_media and self.current_file and self.file_being_waited_on is None:
+            logger.info(f"Current media '{self.current_file}' is playing. Deferring load of new playlist ({len(playlist_files)} files, start index {start_index}). Loop mode for new playlist will be '{self.loop_mode}'.")
+            self.pending_playlist_config = {'files': list(playlist_files), 'index': start_index}
+            self.file_being_waited_on = self.current_file 
+            return True
         else:
-            # Not in playlist loop mode. Switch to playlist mode and load.
-            logger.info(f"Not in playlist loop mode (current: {self.loop_mode}). Switching to playlist mode and loading.")
-            self.loop_mode = 'playlist' 
-            if self.process and self.process.poll() is not None: self.terminate_player()
+            # Execute immediately (nothing playing, or already in a deferred state that's now processing)
+            logger.info(f"Executing playlist load immediately. Target loop mode: '{self.loop_mode}'.")
+            # _execute_playlist_load will terminate any existing MPlayer instance if necessary.
             return self._execute_playlist_load(playlist_files, start_index)
 
     def _execute_playlist_load(self, playlist_files, start_index=0):
-        # This method now contains the logic to start/restart MPlayer with a given playlist.
-        # It assumes temp_playlist.txt is already written by load_playlist.
-        temp_playlist_path = os.path.join(PROJECT_ROOT, "temp_playlist.txt")
-
-        # Ensure any previous MPlayer instance is terminated before starting a new one.
         if self.process and self.process.poll() is None:
             logger.info("Terminating existing MPlayer before executing new playlist load.")
-            self.terminate_player() # Resets current_file, is_playing_media, process
+            self.terminate_player()
 
         if not playlist_files:
             logger.warning("Playlist is empty in _execute_playlist_load. MPlayer will not be started.")
-            self.current_file = None # Ensure state is clean
+            self.current_file = None
             self.is_playing_media = False
             return True 
 
         self._ensure_mplayer_executable()
         
-        # Make sure FIFO exists
         if not os.path.exists(MPLAYER_FIFO_PATH):
             self._setup_fifo()
             
-        effective_start_filename = None
-        effective_start_file_path = None
-
-        if 0 <= start_index < len(playlist_files):
-            effective_start_filename = playlist_files[start_index]
-        elif playlist_files: 
+        # Determine the actual starting filename and reorder playlist for temp file
+        if not (0 <= start_index < len(playlist_files)):
             logger.warning(f"Provided start_index {start_index} is out of bounds for playlist of length {len(playlist_files)}. Defaulting to index 0.")
-            effective_start_filename = playlist_files[0]
-            # start_index = 0 # Correct start_index for state update later - not strictly needed here as it's just for MPlayer cmd
-        else: 
-            logger.error("Playlist is empty, cannot determine a start file.")
-            return False
-
-        if effective_start_filename:
-            effective_start_file_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', effective_start_filename)
-            if not os.path.exists(effective_start_file_path):
-                logger.warning(f"Specified start file '{effective_start_file_path}' not found. Attempting to start playlist from beginning.")
-                # Fallback to the first file in the playlist if the specified start_index file doesn't exist
-                if playlist_files: # Should always be true if effective_start_filename was set
-                    effective_start_filename = playlist_files[0]
-                    effective_start_file_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', effective_start_filename)
-                    if not os.path.exists(effective_start_file_path):
-                        logger.error(f"First file of playlist '{effective_start_file_path}' also not found. Aborting MPlayer start.")
-                        self.current_file = None
-                        self.is_playing_media = False
-                        return False
-                else: # Should not happen if initial playlist_files check passed
-                    logger.error("Playlist became empty while trying to find a valid start file.")
-                    return False
+            start_index = 0
         
-        target_device = os.getenv("KTV_TARGET_DEVICE", "laptop")
+        actual_start_filename = playlist_files[start_index]
+        # Create the reordered list for temp_playlist.txt: items from start_index to end, then items from 0 to start_index-1
+        reordered_playlist_for_file = playlist_files[start_index:] + playlist_files[:start_index]
+
+        # Write the reordered playlist to temp_playlist.txt (still useful for 'none' mode or debugging)
+        temp_playlist_path = os.path.join(PROJECT_ROOT, "temp_playlist.txt")
+        if not reordered_playlist_for_file: 
+            logger.error("Reordered playlist is empty, cannot proceed.")
+            return False
+            
+        try:
+            with open(temp_playlist_path, 'w') as f:
+                for file_item in reordered_playlist_for_file:
+                    full_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', file_item)
+                    if not os.path.exists(full_path):
+                        logger.warning(f"File {full_path} in reordered playlist does not exist. MPlayer might skip it or error if passed directly.")
+                    f.write(f"{full_path}\\n")
+            logger.info(f"Successfully wrote reordered playlist ({len(reordered_playlist_for_file)} items, starting with {actual_start_filename}) to '{temp_playlist_path}'.")
+        except Exception as e:
+            logger.error(f"Failed to write reordered temporary playlist file '{temp_playlist_path}': {e}")
+            return False
+        
+        # Base MPlayer command
         cmd = ["mplayer", "-slave", "-input", f"file={MPLAYER_FIFO_PATH}", "-quiet", "-nolirc"]
 
+        target_device = os.getenv("KTV_TARGET_DEVICE", "laptop")
         if target_device == "raspberrypi":
             cmd.extend(["-vo", "fbdev", "-fbdev", "/dev/fb0", "-x", "240", "-y", "320", "-bpp", "16", "-vf", "scale=240:320"])
-            logger.info("Configuring MPlayer for Raspberry Pi (framebuffer) - playlist execution")
         else: 
             cmd.extend(["-vo", "x11"])
-            logger.info("Configuring MPlayer for Laptop (X11) - playlist execution")
         
-        # Add loop mode
+        # Add loop mode and playlist/file arguments
+        # self.loop_mode should be set by API calls prior to load_playlist/_execute_playlist_load
         if self.loop_mode == 'playlist':
+            cmd.extend(["-loop", "0"]) # Loop the entire sequence of files provided on CLI
+            logger.info("Configuring MPlayer for playlist loop (files on CLI with -loop 0).")
+            
+            paths_for_cmd = []
+            # Use reordered_playlist_for_file so MPlayer starts with actual_start_filename
+            for file_item in reordered_playlist_for_file: 
+                full_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', file_item)
+                if os.path.exists(full_path):
+                    paths_for_cmd.append(full_path)
+                else:
+                    # This file won't be added to MPlayer's command line arguments
+                    logger.warning(f"File {full_path} for playlist CLI command does not exist. Skipping.")
+            
+            if not paths_for_cmd:
+                logger.error("Playlist loop mode: No valid files to play (all files missing or playlist empty after filtering?). Aborting MPlayer start.")
+                self.current_file = None
+                self.is_playing_media = False
+                return False
+            cmd.extend(paths_for_cmd)
+
+        elif self.loop_mode == 'none': # Play playlist once
+            logger.info("Configuring MPlayer to play playlist once (using -playlist arg with reordered temp_playlist.txt).")
+            cmd.extend(["-playlist", temp_playlist_path]) # temp_playlist.txt starts with actual_start_filename
+
+        elif self.loop_mode == 'file':
+            logger.info(f"Configuring MPlayer for single file loop: '{actual_start_filename}' (file on CLI with -loop 0).")
             cmd.extend(["-loop", "0"])
-            logger.info("Adding playlist loop mode (infinite)")
-        
-        cmd.append(effective_start_file_path)
-        cmd.extend(["-playlist", temp_playlist_path])
-
-        try:
-            initial_log_line_for_current_file = ""
-            # Determine the file MPlayer is expected to log as "Playing" first.
-            # If cmd includes a direct file, MPlayer logs that. 
-            # If cmd only has -playlist, MPlayer logs the first file from the playlist.
-            expected_first_logged_file_path = ""
-            if effective_start_file_path and os.path.exists(effective_start_file_path) and cmd[0] == "mplayer" and len(cmd) > 1 and cmd[-2] != "-playlist": # Check if a file is directly passed before -playlist
-                 # This logic is a bit fragile; relies on cmd structure.
-                 # A more robust way is to see if effective_start_file_path is in cmd before "-playlist"
-                 try:
-                     idx_playlist_arg = cmd.index("-playlist")
-                     # Check if effective_start_file_path is in cmd before idx_playlist_arg
-                     if effective_start_file_path in cmd[:idx_playlist_arg]:
-                         expected_first_logged_file_path = effective_start_file_path
-                 except ValueError: # -playlist not found, means only one file or direct list
-                     if effective_start_file_path in cmd:
-                        expected_first_logged_file_path = effective_start_file_path
-            
-            if not expected_first_logged_file_path and playlist_files: # Fallback if MPlayer starts directly from playlist file
-                expected_first_logged_file_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', playlist_files[0])
+            file_to_play_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', actual_start_filename)
+            if os.path.exists(file_to_play_path):
+                cmd.append(file_to_play_path)
+            else:
+                logger.error(f"File loop mode: File '{file_to_play_path}' for looping not found. Aborting MPlayer start.")
+                self.current_file = None
+                self.is_playing_media = False
+                return False
+        else: 
+            logger.error(f"Unexpected loop_mode: '{self.loop_mode}'. Defaulting to playing playlist once via -playlist arg.")
+            cmd.extend(["-playlist", temp_playlist_path])
 
 
-            if expected_first_logged_file_path:
+        # Pre-seed log for _check_mplayer_log_for_current_file
+        # actual_start_filename is the first file MPlayer will play in all configured modes.
+        initial_log_line_for_current_file = ""
+        if actual_start_filename: 
+            expected_first_logged_file_path = os.path.join(PROJECT_ROOT, 'app', 'uploads', actual_start_filename)
+            # Check if this file would actually be played (e.g. exists and was added to paths_for_cmd or is in temp_playlist.txt)
+            # For simplicity, we just check existence here; MPlayer will log what it actually plays.
+            if os.path.exists(expected_first_logged_file_path):
                  initial_log_line_for_current_file = f"Playing {expected_first_logged_file_path}\\n"
-            
+            else:
+                logger.warning(f"Cannot pre-seed log: starting file '{expected_first_logged_file_path}' does not exist.")
+        
+        try:
             with open(MPLAYER_LOG_PATH, "w") as log_file:
-                if initial_log_line_for_current_file: # Pre-seed log for _check_mplayer_log_for_current_file
+                if initial_log_line_for_current_file:
                     log_file.write(initial_log_line_for_current_file)
                 logger.debug(f"Attempting to start MPlayer with command: {' '.join(cmd)}")
                 self.process = subprocess.Popen(cmd, stdout=log_file, stderr=subprocess.STDOUT)
             
-            time.sleep(0.2) 
+            time.sleep(0.2) # Brief pause for MPlayer to start
 
             if self.process and self.process.poll() is None:
-                self.current_file = effective_start_filename 
+                # Set current_file to the one MPlayer is expected to start with.
+                # _check_mplayer_log_for_current_file will verify/update this based on actual log.
+                self.current_file = actual_start_filename 
                 self.is_playing_media = True
                 self.is_paused = False
-                logger.info(f"MPlayer started/restarted. Current file set to: '{self.current_file}', Playing: {self.is_playing_media}")
+                logger.info(f"MPlayer started/restarted. Expected start file: '{self.current_file}', Playing: {self.is_playing_media}, Loop Mode: {self.loop_mode}")
             else:
                 logger.error("MPlayer process failed to start or exited immediately after attempting to load playlist.")
                 self.current_file = None 
