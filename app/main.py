@@ -236,10 +236,13 @@ def get_playlist():
     elif display_current_file is None and not media_playlist:
         display_current_file = None
 
+    is_paused = mpv_status.get('is_paused', False) if mpv_is_running else False
+    
     return jsonify({
         "playlist": media_playlist,
         "currentFile": display_current_file,
         "isPlaying": is_playing, # Use the synced is_playing state
+        "isPaused": is_paused,  # Include paused state
         "loop_mode": current_loop_mode,
         "mpv_is_running": mpv_is_running,
         "currentIndex": current_media_index # For UI highlighting
@@ -297,16 +300,32 @@ def control_play():
 @app.route('/api/control/pause', methods=['POST'])
 def control_pause():
     global is_playing
-    # MPlayer doesn't support pause in this implementation
-    logger.warning("Pause not supported in MPlayer implementation.")
-    return jsonify({"warning": "Pause not supported in this player implementation."}), 200
+    
+    if not mpv.get_playback_status().get('is_mpv_running'):
+        return jsonify({"error": "MPlayer is not running"}), 503
+    
+    if mpv.pause():
+        logger.info("Playback paused")
+        is_playing = False  # Update global play state
+        return jsonify({"status": "paused"})
+    else:
+        return jsonify({"error": "Failed to pause playback"}), 500
 
 @app.route('/api/control/toggle_pause', methods=['POST'])
 def control_toggle_pause():
     global is_playing
-    # MPlayer doesn't support toggle_pause in this implementation
-    logger.warning("Toggle pause not supported in MPlayer implementation.")
-    return jsonify({"warning": "Toggle pause not supported in this player implementation."}), 200
+    
+    if not mpv.get_playback_status().get('is_mpv_running'):
+        return jsonify({"error": "MPlayer is not running"}), 503
+    
+    if mpv.toggle_pause():
+        status = mpv.get_playback_status()
+        is_playing = not status.get('is_paused', False)  # Update global play state
+        state = "paused" if status.get('is_paused', False) else "playing"
+        logger.info(f"Toggled pause state. Current state: {state}")
+        return jsonify({"status": state})
+    else:
+        return jsonify({"error": "Failed to toggle playback state"}), 500
 
 @app.route('/api/control/stop', methods=['POST'])
 def control_stop():
@@ -432,10 +451,14 @@ def get_playlist_data_for_response():
     if display_file is None and 0 <= current_media_index < len(media_playlist):
         display_file = media_playlist[current_media_index]
     
+    # Get paused state from MPlayer
+    is_paused_internal = mpv_status_internal.get('is_paused', False) if mpv_is_running_internal else False
+    
     return {
         "playlist": media_playlist,
         "currentFile": display_file,
         "isPlaying": is_playing,
+        "isPaused": is_paused_internal,
         "loop_mode": current_loop_mode,
         "mpv_is_running": mpv_is_running_internal,
         "currentIndex": current_media_index

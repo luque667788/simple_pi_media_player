@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 MPLAYER_LOG_PATH = os.path.join(PROJECT_ROOT, "mplayer.log")
+MPLAYER_FIFO_PATH = os.path.join(PROJECT_ROOT, "mplayer.fifo") # Add FIFO path
 load_dotenv(os.path.join(PROJECT_ROOT, '.env')) # Load .env file
 
 class MPlayerController:
@@ -15,10 +16,45 @@ class MPlayerController:
         self.process = None
         self.current_file = None
         self.is_playing_media = False
+        self.is_paused = False  # Track paused state
         self.loop_mode = 'none'  # Track loop mode: 'none', 'file', 'playlist'
         self.pending_playlist_config = None # Stores {'files': list_of_files, 'index': start_index}
         self.file_being_waited_on = None  # Stores the filename of the song whose completion triggers reload
-        logger.info(f"MPlayerController initialized. Log path: {MPLAYER_LOG_PATH}")
+        self._setup_fifo()  # Set up the FIFO pipe on initialization
+        logger.info(f"MPlayerController initialized. Log path: {MPLAYER_LOG_PATH}, FIFO path: {MPLAYER_FIFO_PATH}")
+
+    def _setup_fifo(self):
+        """Set up the FIFO (named pipe) for communicating with MPlayer in slave mode"""
+        # Remove existing FIFO if it exists
+        if os.path.exists(MPLAYER_FIFO_PATH):
+            try:
+                os.unlink(MPLAYER_FIFO_PATH)
+                logger.debug(f"Removed existing FIFO pipe: {MPLAYER_FIFO_PATH}")
+            except OSError as e:
+                logger.error(f"Failed to remove existing FIFO pipe: {e}")
+        
+        try:
+            # Create a new FIFO pipe
+            os.mkfifo(MPLAYER_FIFO_PATH)
+            logger.info(f"Created MPlayer FIFO pipe at: {MPLAYER_FIFO_PATH}")
+        except OSError as e:
+            logger.error(f"Failed to create FIFO pipe: {e}")
+
+    def _send_command(self, command):
+        """Send a command to MPlayer through the FIFO pipe"""
+        if not self.process or self.process.poll() is not None:
+            logger.warning("Tried to send command but MPlayer is not running")
+            return False
+            
+        try:
+            with open(MPLAYER_FIFO_PATH, 'w') as fifo:
+                fifo.write(f"{command}\n")
+                fifo.flush()
+            logger.debug(f"Sent command to MPlayer: {command}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send command to MPlayer: {e}")
+            return False
 
     def _ensure_mplayer_executable(self):
         if subprocess.call(["which", "mplayer"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
@@ -39,8 +75,12 @@ class MPlayerController:
             logger.error(f"Media file not found: {full_path}")
             return False
 
-        logger.info(f"Starting MPlayer with file: {full_path}")
+        logger.info(f"Starting MPlayer with file in slave mode: {full_path}")
         
+        # Make sure FIFO exists
+        if not os.path.exists(MPLAYER_FIFO_PATH):
+            self._setup_fifo()
+            
         target_device = os.getenv("KTV_TARGET_DEVICE", "laptop") # Get target device from .env
         
         cmd = ["mplayer"]
@@ -69,6 +109,8 @@ class MPlayerController:
         cmd.extend([
             "-quiet",
             "-nolirc",
+            "-slave",  # Enable slave mode for control commands
+            "-input", f"file={MPLAYER_FIFO_PATH}", # Specify FIFO for commands
             full_path
         ])
 
@@ -89,6 +131,7 @@ class MPlayerController:
 
             self.current_file = filepath
             self.is_playing_media = True
+            self.is_paused = False
             return True
         except Exception as e:
             logger.error(f"Failed to start MPlayer in load_file: {e}")
@@ -99,15 +142,49 @@ class MPlayerController:
             return False
 
     def play(self):
-        logger.warning("MPlayer does not support pause/resume control in this implementation.")
+        """Resume playback if paused, otherwise starts playback"""
+        if not self.process or self.process.poll() is not None:
+            logger.warning("Cannot play: MPlayer is not running")
+            return False
+            
+        if self.is_paused:
+            logger.info("Resuming playback from paused state")
+            if self._send_command("pause"):
+                self.is_paused = False
+                self.is_playing_media = True
+                return True
+        else:
+            logger.info("Play command sent, but player is already in playing state")
+            return True
         return False
 
     def pause(self):
-        logger.warning("MPlayer does not support pause/resume control in this implementation.")
+        """Pause playback if playing"""
+        if not self.process or self.process.poll() is not None:
+            logger.warning("Cannot pause: MPlayer is not running")
+            return False
+            
+        if not self.is_paused and self.is_playing_media:
+            logger.info("Pausing playback")
+            if self._send_command("pause"):
+                self.is_paused = True
+                return True
+        else:
+            logger.info("Pause command sent, but player is already paused or not playing")
+            return True
         return False
 
     def toggle_pause(self):
-        return self.pause() if self.is_playing_media else self.play()
+        """Toggle between play and pause states"""
+        if not self.process or self.process.poll() is not None:
+            logger.warning("Cannot toggle pause: MPlayer is not running")
+            return False
+            
+        logger.info(f"Toggling pause state. Current state - is_paused: {self.is_paused}, is_playing_media: {self.is_playing_media}")
+        if self._send_command("pause"):
+            self.is_paused = not self.is_paused
+            return True
+        return False
 
     def stop(self):
         return self.terminate_player()
@@ -126,6 +203,7 @@ class MPlayerController:
             self.process = None
             self.current_file = None
             self.is_playing_media = False
+            self.is_paused = False
         return True
 
     def get_playback_status(self):
@@ -176,6 +254,7 @@ class MPlayerController:
             "is_mpv_running": current_mplayer_process_running,
             "current_file": self.current_file,
             "is_playing_media": self.is_playing_media,
+            "is_paused": self.is_paused,
             "loop_mode": self.loop_mode
         }
         
@@ -262,13 +341,13 @@ class MPlayerController:
             else:
                 # Playlist mode, but nothing is playing or current_file is not set.
                 logger.info("Playlist mode: No current file playing or player stopped. Starting new playlist immediately.")
-                if self.process and self.process.poll() is None: self.terminate_player()
+                if self.process and self.process.poll() is not None: self.terminate_player()
                 return self._execute_playlist_load(playlist_files, start_index)
         else:
             # Not in playlist loop mode. Switch to playlist mode and load.
             logger.info(f"Not in playlist loop mode (current: {self.loop_mode}). Switching to playlist mode and loading.")
             self.loop_mode = 'playlist' 
-            if self.process and self.process.poll() is None: self.terminate_player()
+            if self.process and self.process.poll() is not None: self.terminate_player()
             return self._execute_playlist_load(playlist_files, start_index)
 
     def _execute_playlist_load(self, playlist_files, start_index=0):
@@ -289,6 +368,10 @@ class MPlayerController:
 
         self._ensure_mplayer_executable()
         
+        # Make sure FIFO exists
+        if not os.path.exists(MPLAYER_FIFO_PATH):
+            self._setup_fifo()
+            
         effective_start_filename = None
         effective_start_file_path = None
 
@@ -320,7 +403,7 @@ class MPlayerController:
                     return False
         
         target_device = os.getenv("KTV_TARGET_DEVICE", "laptop")
-        cmd = ["mplayer"]
+        cmd = ["mplayer", "-slave", "-input", f"file={MPLAYER_FIFO_PATH}", "-quiet", "-nolirc"]
 
         if target_device == "raspberrypi":
             cmd.extend(["-vo", "fbdev", "-fbdev", "/dev/fb0", "-x", "240", "-y", "320", "-bpp", "16", "-vf", "scale=240:320"])
@@ -329,21 +412,13 @@ class MPlayerController:
             cmd.extend(["-vo", "x11"])
             logger.info("Configuring MPlayer for Laptop (X11) - playlist execution")
         
-        cmd.extend(["-quiet", "-nolirc", "-loop", "0"])
-
-        if effective_start_file_path and os.path.exists(effective_start_file_path):
-            cmd.append(effective_start_file_path)
-            cmd.extend(["-playlist", temp_playlist_path])
-            logger.info(f"MPlayer will start with '{effective_start_filename}' and then use playlist '{temp_playlist_path}'.")
-        elif playlist_files: # Should only happen if initial effective_start_file_path was bad but playlist_files[0] is good
-            logger.info(f"MPlayer will start with playlist '{temp_playlist_path}' from its beginning as specific start file was invalid/missing.")
-            cmd.extend(["-playlist", temp_playlist_path])
-            effective_start_filename = playlist_files[0] # Ensure this reflects actual start
-        else:
-            logger.error("Cannot start MPlayer: playlist is empty and no valid start file could be determined.")
-            self.current_file = None
-            self.is_playing_media = False
-            return False
+        # Add loop mode
+        if self.loop_mode == 'playlist':
+            cmd.extend(["-loop", "0"])
+            logger.info("Adding playlist loop mode (infinite)")
+        
+        cmd.append(effective_start_file_path)
+        cmd.extend(["-playlist", temp_playlist_path])
 
         try:
             initial_log_line_for_current_file = ""
@@ -381,6 +456,7 @@ class MPlayerController:
             if self.process and self.process.poll() is None:
                 self.current_file = effective_start_filename 
                 self.is_playing_media = True
+                self.is_paused = False
                 logger.info(f"MPlayer started/restarted. Current file set to: '{self.current_file}', Playing: {self.is_playing_media}")
             else:
                 logger.error("MPlayer process failed to start or exited immediately after attempting to load playlist.")

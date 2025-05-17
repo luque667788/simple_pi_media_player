@@ -426,3 +426,260 @@
 [2025-05-17 20:00:07,995] [INFO] [main] Flask application is exiting. Terminating MPlayer.
 [2025-05-17 20:00:07,995] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
 [2025-05-17 20:00:08,027] [INFO] [mplayer_controller] MPlayer terminated.
+[2025-05-17 22:57:09,070] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/server.log
+[2025-05-17 22:57:09,070] [INFO] [logging_config] Logging configured. Log file at: /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/server.log
+[2025-05-17 22:57:09,071] [INFO] [main] Playlist loaded from /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/playlist.json: ['20250513_152258.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 22:57:09,071] [INFO] [main] Playlist loaded from /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/playlist.json: ['20250513_152258.mp4', 'VID-20250409-WA0025.mp4', '20250513_130757.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 22:57:09,071] [INFO] [mplayer_controller] Created MPlayer FIFO pipe at: /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/mplayer.fifo
+[2025-05-17 22:57:09,071] [INFO] [mplayer_controller] MPlayerController initialized. Log path: /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/mplayer.log, FIFO path: /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/mplayer.fifo
+[2025-05-17 22:57:09,077] [INFO] [main] Synchronizing playlist with files in upload folder...
+[2025-05-17 22:57:09,077] [INFO] [main] Synchronizing playlist with files in upload folder...
+[2025-05-17 22:57:09,077] [INFO] [main] Added to playlist (found in uploads but not in playlist.json): ['Screencast From 2025-02-06 10-33-00(1).mp4']
+[2025-05-17 22:57:09,077] [INFO] [main] Added to playlist (found in uploads but not in playlist.json): ['Screencast From 2025-02-06 10-33-00(1).mp4']
+[2025-05-17 22:57:09,077] [INFO] [main] Removed from playlist (in playlist.json but not found in uploads): ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 22:57:09,077] [INFO] [main] Removed from playlist (in playlist.json but not found in uploads): ['20250513_152258.mp4', 'Screencast From 2025-01-30 15-31-14.mp4']
+[2025-05-17 22:57:09,077] [INFO] [main] Playlist synchronized. New playlist: ['VID-20250409-WA0025.mp4', '20250513_130757.mp4', 'Screencast From 2025-02-06 10-33-00(1).mp4']
+[2025-05-17 22:57:09,077] [INFO] [main] Playlist synchronized. New playlist: ['VID-20250409-WA0025.mp4', '20250513_130757.mp4', 'Screencast From 2025-02-06 10-33-00(1).mp4']
+[2025-05-17 22:57:09,077] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/playlist.json
+[2025-05-17 22:57:09,077] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/playlist.json
+[2025-05-17 22:57:09,077] [INFO] [main] Playlist after sync: ['VID-20250409-WA0025.mp4', '20250513_130757.mp4', 'Screencast From 2025-02-06 10-33-00(1).mp4']
+[2025-05-17 22:57:09,077] [INFO] [main] Playlist after sync: ['VID-20250409-WA0025.mp4', '20250513_130757.mp4', 'Screencast From 2025-02-06 10-33-00(1).mp4']
+[2025-05-17 22:57:09,077] [INFO] [main] Starting Flask with MPlayer support...
+[2025-05-17 22:57:09,077] [INFO] [main] Starting Flask with MPlayer support...
+[2025-05-17 22:57:09,080] [WARNING] [_internal]  * Running on all addresses.
+   WARNING: This is a development server. Do not use it in a production deployment.
+[2025-05-17 22:57:09,080] [INFO] [_internal]  * Running on http://10.45.3.0:5000/ (Press CTRL+C to quit)
+[2025-05-17 22:57:10,064] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:10] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:13,772] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:13] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:14,666] [INFO] [main] Serving index.html. Current playlist: ['VID-20250409-WA0025.mp4', '20250513_130757.mp4', 'Screencast From 2025-02-06 10-33-00(1).mp4']
+[2025-05-17 22:57:14,666] [INFO] [main] Serving index.html. Current playlist: ['VID-20250409-WA0025.mp4', '20250513_130757.mp4', 'Screencast From 2025-02-06 10-33-00(1).mp4']
+[2025-05-17 22:57:14,679] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:14] "GET / HTTP/1.1" 200 -
+[2025-05-17 22:57:14,858] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:14] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+[2025-05-17 22:57:14,859] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:14] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+[2025-05-17 22:57:14,975] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:14] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:17,341] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 0. Main's current_loop_mode: none. Controller's actual_loop_mode: none
+[2025-05-17 22:57:17,341] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 0. Main's current_loop_mode: none. Controller's actual_loop_mode: none
+[2025-05-17 22:57:17,341] [INFO] [main] Controller's loop mode is 'none', not 'playlist'. Falling back to load_file for 'VID-20250409-WA0025.mp4'.
+[2025-05-17 22:57:17,341] [INFO] [main] Controller's loop mode is 'none', not 'playlist'. Falling back to load_file for 'VID-20250409-WA0025.mp4'.
+[2025-05-17 22:57:17,344] [INFO] [mplayer_controller] Starting MPlayer with file in slave mode: /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/VID-20250409-WA0025.mp4
+[2025-05-17 22:57:17,344] [INFO] [mplayer_controller] Configuring MPlayer for Laptop (X11)
+[2025-05-17 22:57:17,546] [WARNING] [mplayer_controller] MPLAYER_LOG_PATH is 0 bytes immediately after MPlayer Popen call in load_file.
+[2025-05-17 22:57:17,546] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 22:57:17,546] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 22:57:17,547] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:17] "POST /api/control/play HTTP/1.1" 200 -
+[2025-05-17 22:57:17,560] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:17] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:17,973] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:17] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:20,339] [INFO] [mplayer_controller] Pausing playback
+[2025-05-17 22:57:20,340] [INFO] [main] Playback paused
+[2025-05-17 22:57:20,340] [INFO] [main] Playback paused
+[2025-05-17 22:57:20,341] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:20] "POST /api/control/pause HTTP/1.1" 200 -
+[2025-05-17 22:57:20,481] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:20,481] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:20,482] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:20] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:20,905] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:20] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:22,677] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 0. Main's current_loop_mode: none. Controller's actual_loop_mode: none
+[2025-05-17 22:57:22,677] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 0. Main's current_loop_mode: none. Controller's actual_loop_mode: none
+[2025-05-17 22:57:22,678] [INFO] [main] Controller's loop mode is 'none', not 'playlist'. Falling back to load_file for 'VID-20250409-WA0025.mp4'.
+[2025-05-17 22:57:22,678] [INFO] [main] Controller's loop mode is 'none', not 'playlist'. Falling back to load_file for 'VID-20250409-WA0025.mp4'.
+[2025-05-17 22:57:22,680] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
+[2025-05-17 22:57:22,744] [INFO] [mplayer_controller] MPlayer terminated.
+[2025-05-17 22:57:22,745] [INFO] [mplayer_controller] Starting MPlayer with file in slave mode: /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/VID-20250409-WA0025.mp4
+[2025-05-17 22:57:22,745] [INFO] [mplayer_controller] Configuring MPlayer for Laptop (X11)
+[2025-05-17 22:57:22,946] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 22:57:22,946] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 22:57:22,947] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:22] "POST /api/control/play HTTP/1.1" 200 -
+[2025-05-17 22:57:22,997] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:22] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:23,934] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:23] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:25,618] [INFO] [mplayer_controller] Pausing playback
+[2025-05-17 22:57:25,618] [INFO] [main] Playback paused
+[2025-05-17 22:57:25,618] [INFO] [main] Playback paused
+[2025-05-17 22:57:25,619] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:25] "POST /api/control/pause HTTP/1.1" 200 -
+[2025-05-17 22:57:25,736] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:25,736] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:25,738] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:25] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:26,482] [INFO] [mplayer_controller] Toggling pause state. Current state - is_paused: True, is_playing_media: True
+[2025-05-17 22:57:26,483] [INFO] [main] Toggled pause state. Current state: playing
+[2025-05-17 22:57:26,483] [INFO] [main] Toggled pause state. Current state: playing
+[2025-05-17 22:57:26,483] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:26] "POST /api/control/toggle_pause HTTP/1.1" 200 -
+[2025-05-17 22:57:26,510] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:26] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:26,903] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:26] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:27,312] [INFO] [mplayer_controller] Toggling pause state. Current state - is_paused: False, is_playing_media: True
+[2025-05-17 22:57:27,313] [INFO] [main] Toggled pause state. Current state: paused
+[2025-05-17 22:57:27,313] [INFO] [main] Toggled pause state. Current state: paused
+[2025-05-17 22:57:27,313] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:27] "POST /api/control/toggle_pause HTTP/1.1" 200 -
+[2025-05-17 22:57:27,334] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:27,334] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:27,335] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:27] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:28,298] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 0. Main's current_loop_mode: none. Controller's actual_loop_mode: none
+[2025-05-17 22:57:28,298] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 0. Main's current_loop_mode: none. Controller's actual_loop_mode: none
+[2025-05-17 22:57:28,299] [INFO] [main] Controller's loop mode is 'none', not 'playlist'. Falling back to load_file for 'VID-20250409-WA0025.mp4'.
+[2025-05-17 22:57:28,299] [INFO] [main] Controller's loop mode is 'none', not 'playlist'. Falling back to load_file for 'VID-20250409-WA0025.mp4'.
+[2025-05-17 22:57:28,303] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
+[2025-05-17 22:57:28,336] [INFO] [mplayer_controller] MPlayer terminated.
+[2025-05-17 22:57:28,336] [INFO] [mplayer_controller] Starting MPlayer with file in slave mode: /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/VID-20250409-WA0025.mp4
+[2025-05-17 22:57:28,336] [INFO] [mplayer_controller] Configuring MPlayer for Laptop (X11)
+[2025-05-17 22:57:28,539] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 22:57:28,539] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 22:57:28,539] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:28] "POST /api/control/play HTTP/1.1" 200 -
+[2025-05-17 22:57:28,559] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:28] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:29,911] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:29] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:32,123] [INFO] [mplayer_controller] Toggling pause state. Current state - is_paused: False, is_playing_media: True
+[2025-05-17 22:57:32,123] [INFO] [main] Toggled pause state. Current state: paused
+[2025-05-17 22:57:32,123] [INFO] [main] Toggled pause state. Current state: paused
+[2025-05-17 22:57:32,124] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:32] "POST /api/control/toggle_pause HTTP/1.1" 200 -
+[2025-05-17 22:57:32,208] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:32,208] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:32,210] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:32] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:32,914] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:32] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:35,907] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:35] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:36,205] [INFO] [mplayer_controller] Toggling pause state. Current state - is_paused: True, is_playing_media: True
+[2025-05-17 22:57:36,205] [INFO] [main] Toggled pause state. Current state: playing
+[2025-05-17 22:57:36,205] [INFO] [main] Toggled pause state. Current state: playing
+[2025-05-17 22:57:36,206] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:36] "POST /api/control/toggle_pause HTTP/1.1" 200 -
+[2025-05-17 22:57:36,226] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:36] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:37,887] [INFO] [mplayer_controller] Toggling pause state. Current state - is_paused: False, is_playing_media: True
+[2025-05-17 22:57:37,887] [INFO] [main] Toggled pause state. Current state: paused
+[2025-05-17 22:57:37,887] [INFO] [main] Toggled pause state. Current state: paused
+[2025-05-17 22:57:37,888] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:37] "POST /api/control/toggle_pause HTTP/1.1" 200 -
+[2025-05-17 22:57:37,905] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:37,905] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:37,906] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:37] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:38,908] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:38] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:40,562] [INFO] [mplayer_controller] Toggling pause state. Current state - is_paused: True, is_playing_media: True
+[2025-05-17 22:57:40,563] [INFO] [main] Toggled pause state. Current state: playing
+[2025-05-17 22:57:40,563] [INFO] [main] Toggled pause state. Current state: playing
+[2025-05-17 22:57:40,563] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:40] "POST /api/control/toggle_pause HTTP/1.1" 200 -
+[2025-05-17 22:57:40,584] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:40] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:41,918] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:41] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:42,924] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 0. Main's current_loop_mode: none. Controller's actual_loop_mode: none
+[2025-05-17 22:57:42,924] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 0. Main's current_loop_mode: none. Controller's actual_loop_mode: none
+[2025-05-17 22:57:42,925] [INFO] [main] Controller's loop mode is 'none', not 'playlist'. Falling back to load_file for 'VID-20250409-WA0025.mp4'.
+[2025-05-17 22:57:42,925] [INFO] [main] Controller's loop mode is 'none', not 'playlist'. Falling back to load_file for 'VID-20250409-WA0025.mp4'.
+[2025-05-17 22:57:42,926] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
+[2025-05-17 22:57:42,958] [INFO] [mplayer_controller] MPlayer terminated.
+[2025-05-17 22:57:42,959] [INFO] [mplayer_controller] Starting MPlayer with file in slave mode: /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/VID-20250409-WA0025.mp4
+[2025-05-17 22:57:42,959] [INFO] [mplayer_controller] Configuring MPlayer for Laptop (X11)
+[2025-05-17 22:57:43,160] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 22:57:43,160] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 22:57:43,161] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:43] "POST /api/control/play HTTP/1.1" 200 -
+[2025-05-17 22:57:43,180] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:43] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:44,955] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:44] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:45,321] [INFO] [main] Play command: Attempting to play '20250513_130757.mp4' at index 1. Main's current_loop_mode: none. Controller's actual_loop_mode: none
+[2025-05-17 22:57:45,321] [INFO] [main] Play command: Attempting to play '20250513_130757.mp4' at index 1. Main's current_loop_mode: none. Controller's actual_loop_mode: none
+[2025-05-17 22:57:45,321] [INFO] [main] Controller's loop mode is 'none', not 'playlist'. Falling back to load_file for '20250513_130757.mp4'.
+[2025-05-17 22:57:45,321] [INFO] [main] Controller's loop mode is 'none', not 'playlist'. Falling back to load_file for '20250513_130757.mp4'.
+[2025-05-17 22:57:45,323] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
+[2025-05-17 22:57:45,356] [INFO] [mplayer_controller] MPlayer terminated.
+[2025-05-17 22:57:45,356] [INFO] [mplayer_controller] Starting MPlayer with file in slave mode: /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/20250513_130757.mp4
+[2025-05-17 22:57:45,356] [INFO] [mplayer_controller] Configuring MPlayer for Laptop (X11)
+[2025-05-17 22:57:45,559] [INFO] [main] Playback started for: 20250513_130757.mp4 (or playlist starting with it). Index: 1
+[2025-05-17 22:57:45,559] [INFO] [main] Playback started for: 20250513_130757.mp4 (or playlist starting with it). Index: 1
+[2025-05-17 22:57:45,559] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:45] "POST /api/control/play HTTP/1.1" 200 -
+[2025-05-17 22:57:45,570] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:45] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:47,904] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:47] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:49,080] [INFO] [mplayer_controller] Pausing playback
+[2025-05-17 22:57:49,081] [INFO] [main] Playback paused
+[2025-05-17 22:57:49,081] [INFO] [main] Playback paused
+[2025-05-17 22:57:49,082] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:49] "POST /api/control/pause HTTP/1.1" 200 -
+[2025-05-17 22:57:49,155] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:49,155] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:49,156] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:49] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:50,258] [INFO] [mplayer_controller] Toggling pause state. Current state - is_paused: True, is_playing_media: True
+[2025-05-17 22:57:50,259] [INFO] [main] Toggled pause state. Current state: playing
+[2025-05-17 22:57:50,259] [INFO] [main] Toggled pause state. Current state: playing
+[2025-05-17 22:57:50,260] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:50] "POST /api/control/toggle_pause HTTP/1.1" 200 -
+[2025-05-17 22:57:50,281] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:50] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:50,900] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:50] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:51,078] [INFO] [mplayer_controller] Toggling pause state. Current state - is_paused: False, is_playing_media: True
+[2025-05-17 22:57:51,078] [INFO] [main] Toggled pause state. Current state: paused
+[2025-05-17 22:57:51,078] [INFO] [main] Toggled pause state. Current state: paused
+[2025-05-17 22:57:51,078] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:51] "POST /api/control/toggle_pause HTTP/1.1" 200 -
+[2025-05-17 22:57:51,095] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:51,095] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:51,096] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:51] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:52,923] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 22:57:52,923] [INFO] [main] API call to restart MPlayer.
+[2025-05-17 22:57:52,924] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
+[2025-05-17 22:57:52,988] [INFO] [mplayer_controller] MPlayer terminated.
+[2025-05-17 22:57:53,488] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 22:57:53,488] [INFO] [main] MPlayer restarted successfully via API.
+[2025-05-17 22:57:53,489] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:53] "POST /api/mplayer/restart HTTP/1.1" 200 -
+[2025-05-17 22:57:53,915] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
+[2025-05-17 22:57:53,915] [INFO] [main] MPlayer is not running. Setting is_playing to False and resetting index.
+[2025-05-17 22:57:53,916] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:53] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:54,213] [INFO] [mplayer_controller] Loop mode set to: playlist
+[2025-05-17 22:57:54,213] [INFO] [main] Loop mode set to: playlist
+[2025-05-17 22:57:54,213] [INFO] [main] Loop mode set to: playlist
+[2025-05-17 22:57:54,213] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:54] "POST /api/settings/loop_mode HTTP/1.1" 200 -
+[2025-05-17 22:57:55,861] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 0. Main's current_loop_mode: playlist. Controller's actual_loop_mode: playlist
+[2025-05-17 22:57:55,861] [INFO] [main] Play command: Attempting to play 'VID-20250409-WA0025.mp4' at index 0. Main's current_loop_mode: playlist. Controller's actual_loop_mode: playlist
+[2025-05-17 22:57:55,862] [INFO] [main] Initiating playback with playlist mode (based on controller state). Full playlist will be loaded starting at index 0.
+[2025-05-17 22:57:55,862] [INFO] [main] Initiating playback with playlist mode (based on controller state). Full playlist will be loaded starting at index 0.
+[2025-05-17 22:57:55,862] [INFO] [mplayer_controller] Successfully wrote 3 items to '/home/luque/Documents/work/fiver/fiverr-kanga/kanga2/temp_playlist.txt'.
+[2025-05-17 22:57:55,862] [INFO] [mplayer_controller] Playlist mode: No current file playing or player stopped. Starting new playlist immediately.
+[2025-05-17 22:57:55,864] [INFO] [mplayer_controller] Configuring MPlayer for Laptop (X11) - playlist execution
+[2025-05-17 22:57:55,865] [INFO] [mplayer_controller] Adding playlist loop mode (infinite)
+[2025-05-17 22:57:56,065] [INFO] [mplayer_controller] MPlayer started/restarted. Current file set to: 'VID-20250409-WA0025.mp4', Playing: True
+[2025-05-17 22:57:56,066] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 22:57:56,066] [INFO] [main] Playback started for: VID-20250409-WA0025.mp4 (or playlist starting with it). Index: 0
+[2025-05-17 22:57:56,066] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:56] "POST /api/control/play HTTP/1.1" 200 -
+[2025-05-17 22:57:56,081] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:56] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:56,912] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:56] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:59,120] [INFO] [mplayer_controller] Pausing playback
+[2025-05-17 22:57:59,120] [INFO] [main] Playback paused
+[2025-05-17 22:57:59,120] [INFO] [main] Playback paused
+[2025-05-17 22:57:59,121] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:59] "POST /api/control/pause HTTP/1.1" 200 -
+[2025-05-17 22:57:59,226] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:59,226] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:57:59,227] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:59] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:57:59,918] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:57:59] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:00,353] [INFO] [mplayer_controller] Toggling pause state. Current state - is_paused: True, is_playing_media: True
+[2025-05-17 22:58:00,354] [INFO] [main] Toggled pause state. Current state: playing
+[2025-05-17 22:58:00,354] [INFO] [main] Toggled pause state. Current state: playing
+[2025-05-17 22:58:00,354] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:00] "POST /api/control/toggle_pause HTTP/1.1" 200 -
+[2025-05-17 22:58:00,383] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:00] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:01,891] [INFO] [main] Changing track (next) via Flask to: 20250513_130757.mp4 at index 1
+[2025-05-17 22:58:01,891] [INFO] [main] Changing track (next) via Flask to: 20250513_130757.mp4 at index 1
+[2025-05-17 22:58:01,895] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
+[2025-05-17 22:58:01,927] [INFO] [mplayer_controller] MPlayer terminated.
+[2025-05-17 22:58:01,927] [INFO] [mplayer_controller] Starting MPlayer with file in slave mode: /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/app/uploads/20250513_130757.mp4
+[2025-05-17 22:58:01,928] [INFO] [mplayer_controller] Configuring MPlayer for Laptop (X11)
+[2025-05-17 22:58:02,129] [INFO] [main] Successfully loaded and started 20250513_130757.mp4 for next.
+[2025-05-17 22:58:02,129] [INFO] [main] Successfully loaded and started 20250513_130757.mp4 for next.
+[2025-05-17 22:58:02,130] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:02] "POST /api/control/next HTTP/1.1" 200 -
+[2025-05-17 22:58:02,243] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:02] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:02,910] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:02] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:04,723] [INFO] [mplayer_controller] Pausing playback
+[2025-05-17 22:58:04,723] [INFO] [main] Playback paused
+[2025-05-17 22:58:04,723] [INFO] [main] Playback paused
+[2025-05-17 22:58:04,723] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:04] "POST /api/control/pause HTTP/1.1" 200 -
+[2025-05-17 22:58:04,749] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:58:04,749] [INFO] [main] Flask's is_playing (False) differs from MPlayer's (True). Updating Flask's state.
+[2025-05-17 22:58:04,751] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:04] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:05,497] [INFO] [mplayer_controller] Toggling pause state. Current state - is_paused: True, is_playing_media: True
+[2025-05-17 22:58:05,497] [INFO] [main] Toggled pause state. Current state: playing
+[2025-05-17 22:58:05,497] [INFO] [main] Toggled pause state. Current state: playing
+[2025-05-17 22:58:05,498] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:05] "POST /api/control/toggle_pause HTTP/1.1" 200 -
+[2025-05-17 22:58:05,506] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:05] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:05,912] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:05] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:08,913] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:08] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:09,698] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/playlist.json
+[2025-05-17 22:58:09,698] [INFO] [main] Playlist saved to /home/luque/Documents/work/fiver/fiverr-kanga/kanga2/playlist.json
+[2025-05-17 22:58:09,699] [INFO] [main] Moved 'VID-20250409-WA0025.mp4' to position 1 (next in playlist). New playlist: ['20250513_130757.mp4', 'VID-20250409-WA0025.mp4', 'Screencast From 2025-02-06 10-33-00(1).mp4']
+[2025-05-17 22:58:09,699] [INFO] [main] Moved 'VID-20250409-WA0025.mp4' to position 1 (next in playlist). New playlist: ['20250513_130757.mp4', 'VID-20250409-WA0025.mp4', 'Screencast From 2025-02-06 10-33-00(1).mp4']
+[2025-05-17 22:58:09,699] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 22:58:09,699] [INFO] [main] Playlist order changed. Changes will take effect when current file finishes playing.
+[2025-05-17 22:58:09,700] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:09] "POST /api/playlist/set_next HTTP/1.1" 200 -
+[2025-05-17 22:58:09,730] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:09] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:11,931] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:11] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:14,913] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:14] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:16,560] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
+[2025-05-17 22:58:16,624] [INFO] [mplayer_controller] MPlayer terminated.
+[2025-05-17 22:58:16,624] [INFO] [main] Playback stopped. MPlayer terminated. Index reset.
+[2025-05-17 22:58:16,624] [INFO] [main] Playback stopped. MPlayer terminated. Index reset.
+[2025-05-17 22:58:16,625] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:16] "POST /api/control/stop HTTP/1.1" 200 -
+[2025-05-17 22:58:16,659] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:16] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:17,922] [INFO] [_internal] 10.45.3.0 - - [17/May/2025 22:58:17] "GET /api/playlist HTTP/1.1" 200 -
+[2025-05-17 22:58:20,322] [INFO] [main] Flask application is exiting. Terminating MPlayer.
+[2025-05-17 22:58:20,322] [INFO] [main] Flask application is exiting. Terminating MPlayer.
+[2025-05-17 22:58:20,322] [INFO] [mplayer_controller] Attempting to terminate MPlayer...
