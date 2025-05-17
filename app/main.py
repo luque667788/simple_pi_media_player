@@ -252,6 +252,20 @@ def get_playlist():
 def control_play():
     global current_media_index, is_playing, media_playlist, current_loop_mode # current_loop_mode is main.py's perspective
     
+    # First check if MPlayer is running and paused - if so, just unpause it
+    controller_status = mpv.get_playback_status()
+    if (controller_status.get('is_mpv_running') and 
+        controller_status.get('is_paused') and 
+        controller_status.get('is_playing_media')):
+        logger.info("Play command: MPlayer is paused. Unpausing instead of loading.")
+        if mpv.play():  # Use the play() method which will unpause if paused
+            is_playing = True
+            return jsonify({
+                "status": "playing", 
+                "currentFile": controller_status.get('current_file'),
+                "currentIndex": current_media_index
+            })
+    
     data = request.get_json(silent=True) or {}
     target_filename = data.get('filename')
 
@@ -343,6 +357,20 @@ def control_stop():
 
 def _play_next_or_prev(direction, from_auto_advance=False):
     global current_media_index, is_playing, media_playlist, loop_playlist, current_loop_mode
+
+    # Use MPlayer's native playlist navigation if in playlist mode and MPlayer is running
+    controller_status = mpv.get_playback_status()
+    if controller_status.get('loop_mode') == 'playlist' and controller_status.get('is_mpv_running'):
+        if direction == "next":
+            success = mpv.playlist_next()
+        else:
+            success = mpv.playlist_prev()
+        if success:
+            logger.info(f"Sent pt_step command to MPlayer for {direction} in playlist mode.")
+            return jsonify(get_playlist_data_for_response())
+        else:
+            logger.warning(f"Failed to send pt_step command to MPlayer for {direction}.")
+            return jsonify({"error": f"Failed to advance playlist ({direction}) in MPlayer."}), 500
 
     is_background = from_auto_advance
     if not is_background:
@@ -688,7 +716,7 @@ def api_mplayer_restart():
         logger.info("Attempting to restart MPlayer...")
         mpv.terminate_player()  # Stop the current player instance
         time.sleep(0.5)  # Give it a moment to release resources
-        # The player will be restarted automatically when the next command requires it (e.g., play)
+        # The player will be restarted automatically when the next code action requires it (e.g., play)
         # Or, if you have a specific method to re-initialize or ensure it's ready:
         # mpv.ensure_player_is_running() # This would be a new method in MPlayerController
         logger.info("MPlayer restart process initiated. Player will start on next action.")
