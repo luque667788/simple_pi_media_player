@@ -1,0 +1,37 @@
+MPlayer SVN-r38674-14 (C) 2000-2025 MPlayer Team
+
+Playing /home/luque/Documents/work/fiver/kanga2/app/uploads/20250513_152258.mp4.
+libavformat version 61.7.100 (external)
+libavformat file format detected.
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0x7f32aa6744a0]Protocol name not provided, cannot determine if input is local or a network protocol, buffers and access patterns cannot be configured optimally without knowing the protocol
+[lavf] stream 0: video (h264), -vid 0
+[lavf] stream 1: audio (aac), -aid 0, -alang eng
+VIDEO:  [H264]  1920x1080  24bpp  30.000 fps  16892.8 kbps (2062.1 kbyte/s)
+X11 error: BadMatch (invalid parameter attributes)
+==========================================================================
+Opening video decoder: [ffmpeg] FFmpeg's libavcodec codec family
+libavcodec version 61.19.101 (external)
+Selected video codec: [ffh264] vfm: ffmpeg (FFmpeg H.264)
+==========================================================================
+Clip info:
+ major_brand: mp42
+ minor_version: 0
+ compatible_brands: isommp42
+ creation_time: 2025-05-13T13:23:31.000000Z
+ com.android.version: 14
+ com.android.capture.fps: 30.000000
+Load subtitles in /home/luque/Documents/work/fiver/kanga2/app/uploads/
+==========================================================================
+Opening audio decoder: [ffmpeg] FFmpeg/libavcodec audio decoders
+AUDIO: 48000 Hz, 2 ch, floatle, 256.0 kbit/8.33% (ratio: 32000->384000)
+Selected audio codec: [ffaac] afm: ffmpeg (FFmpeg AAC (MPEG-2/MPEG-4 Audio))
+==========================================================================
+AO: [pulse] 48000Hz 2ch floatle (4 bytes per sample)
+Starting playback...
+Movie-Aspect is undefined - no prescaling applied.
+VO: [x11] 1920x1080 => 1920x1080 Planar YV12 
+[swscaler @ 0x7f32aa813a80]using unscaled yuv420p -> bgra special converter
+No bind found for key 'CTRL-p'.
+
+
+Exiting... (End of file)

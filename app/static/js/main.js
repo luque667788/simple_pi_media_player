@@ -229,16 +229,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loopModeSelect.addEventListener('change', async () => {
         const mode = loopModeSelect.value;
-        // First, restart MPV process
-        uploadStatus.textContent = 'Restarting MPV process for mode change...';
+        // First, restart MPlayer process
+        uploadStatus.textContent = 'Restarting MPlayer process for mode change...';
         uploadStatus.className = '';
-        const restartResp = await fetchAPI('/mpv/restart', 'POST');
-        if (!restartResp || restartResp.status !== 'mpv_restarted') {
-            uploadStatus.textContent = restartResp?.error || 'Failed to restart MPV for mode change.';
+        const restartResp = await fetchAPI('/mplayer/restart', 'POST');
+        if (!restartResp || restartResp.status !== 'mplayer_restarted') {
+            uploadStatus.textContent = restartResp?.error || 'Failed to restart MPlayer for mode change.';
             uploadStatus.className = 'error-message';
             return;
         }
-        // Wait a moment to ensure MPV is up
+        // Wait a moment to ensure MPlayer is up
         await new Promise(res => setTimeout(res, 700));
         // Now set the loop mode
         const response = await fetchAPI('/settings/loop_mode', 'POST', { mode: mode });
@@ -256,23 +256,44 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshStatusButton.addEventListener('click', fetchAndRefreshStatus);
 
     restartMpvButton.addEventListener('click', async () => {
-        if(confirm("Are you sure you want to restart the MPV process? This might interrupt playback.")){
-            uploadStatus.textContent = 'Restarting MPV process...';
+        if(confirm("Are you sure you want to restart the MPlayer process? This might interrupt playback.")){
+            uploadStatus.textContent = 'Restarting MPlayer process...';
             uploadStatus.className = '';
-            const response = await fetchAPI('/mpv/restart', 'POST');
-            if (response && response.status === "mpv_restarted"){
-                uploadStatus.textContent = 'MPV process restart initiated.';
+            const response = await fetchAPI('/mplayer/restart', 'POST');
+            if (response && response.status === "mplayer_restarted"){
+                uploadStatus.textContent = 'MPlayer process restart initiated.';
                 uploadStatus.className = 'success-message';
             } else {
-                uploadStatus.textContent = response.error || 'Failed to initiate MPV restart.';
+                uploadStatus.textContent = response.error || 'Failed to initiate MPlayer restart.';
                 uploadStatus.className = 'error-message';
             }
-            setTimeout(fetchAndRefreshStatus, 1500); // Give MPV time to restart before refreshing status
+            setTimeout(fetchAndRefreshStatus, 1500); // Give MPlayer time to restart before refreshing status
         }
     });
 
     // --- Initial Load ---
     fetchAndRefreshStatus();
-    setInterval(fetchAndRefreshStatus, 10000); // Periodically refresh status every 10 seconds
+    
+    // Track the last known state to detect changes
+    let lastKnownFile = null;
+    let lastKnownPlayingState = false;
+    
+    // Set up polling for UI updates
+    setInterval(async () => {
+        const status = await fetchAPI('/playlist');
+        if (!status) return;
+        
+        // Detect if something important has changed
+        const fileChanged = status.currentFile !== lastKnownFile;
+        const playStateChanged = status.isPlaying !== lastKnownPlayingState;
+        
+        // Update UI if there are changes or in playlist mode
+        if (fileChanged || playStateChanged || (status.loop_mode === 'playlist' && status.isPlaying)) {
+            console.log(`Updating UI due to changes: fileChanged=${fileChanged}, playStateChanged=${playStateChanged}`);
+            updateStatusUI(status);
+            lastKnownFile = status.currentFile;
+            lastKnownPlayingState = status.isPlaying;
+        }
+    }, 3000); // Poll every 3 seconds to stay more responsive
 
 });
