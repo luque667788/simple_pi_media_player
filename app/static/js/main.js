@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playerStateSpan.textContent = data.isPlaying ? 'Playing' : 'Paused/Idle';
         if(data.status === "playlist_empty") playerStateSpan.textContent = "Playlist Empty";
         if(data.status === "playlist_ended") playerStateSpan.textContent = "Playlist Ended";
-        if(data.status === "stopped") playerStateSpan.textContent = "Stopped (Black Screen)";
+        if(data.status === "stopped") playerStateSpan.textContent = "Stopped";
         
         // Update loop mode dropdown
         if (data.loop_mode) {
