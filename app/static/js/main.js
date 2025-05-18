@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.loop_mode) {
             loopModeSelect.value = data.loop_mode;
         }
-        mpvProcessStatusSpan.textContent = data.mpv_is_running ? "Running" : "Not Running/Error";
+        mpvProcessStatusSpan.textContent = data.mplayer_is_running ? "Running" : "Not Running/Error";
         
         // Update playlist UI, passing loop_mode
         updatePlaylistUI(data.playlist, data.currentFile, data.loop_mode);
@@ -363,8 +363,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     stopButton.addEventListener('click', async () => {
-        const response = await fetchAPI('/control/stop', 'POST');
-        if (response) updateStatusUI(response);
+        const stopResp = await fetchAPI('/control/stop', 'POST');
+        if (!stopResp || (stopResp.status !== "stopped" && stopResp.currentFile !== null)) {
+            uploadStatus.textContent = stopResp?.error || 'Failed to stop MPlayer.';
+            uploadStatus.className = 'error-message';
+            // Attempt to refresh status anyway, as loop mode might still be settable
+            fetchAndRefreshStatus();
+            return;
+        }
+        uploadStatus.textContent = 'MPlayer process stopped.';
         fetchAndRefreshStatus();
     });
 
@@ -385,12 +392,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // First, restart MPlayer process
         uploadStatus.textContent = 'Restarting MPlayer process for mode change...';
         uploadStatus.className = '';
-        const restartResp = await fetchAPI('/mplayer/restart', 'POST');
-        if (!restartResp || restartResp.status !== 'mplayer_restarted') {
-            uploadStatus.textContent = restartResp?.error || 'Failed to restart MPlayer for mode change.';
+        const stopResp = await fetchAPI('/control/stop', 'POST');
+        if (!stopResp || (stopResp.status !== "stopped" && stopResp.currentFile !== null)) {
+            uploadStatus.textContent = stopResp?.error || 'Failed to stop MPlayer for mode change.';
             uploadStatus.className = 'error-message';
+            // Attempt to refresh status anyway, as loop mode might still be settable
+            fetchAndRefreshStatus();
             return;
         }
+        uploadStatus.textContent = 'MPlayer process stopped. Setting loop mode...';
+        uploadStatus.className = '';
         // Wait a moment to ensure MPlayer is up
         await new Promise(res => setTimeout(res, 700));
         // Now set the loop mode
@@ -412,12 +423,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if(confirm("Are you sure you want to restart the MPlayer process? This might interrupt playback.")){
             uploadStatus.textContent = 'Restarting MPlayer process...';
             uploadStatus.className = '';
-            const response = await fetchAPI('/mplayer/restart', 'POST');
-            if (response && response.status === "mplayer_restarted"){
-                uploadStatus.textContent = 'MPlayer process restart initiated.';
-                uploadStatus.className = 'success-message';
+            // First, stop the player
+            const stopResponse = await fetchAPI('/control/stop', 'POST');
+            if (stopResponse && (stopResponse.status === "stopped" || stopResponse.currentFile === null)) {
+                uploadStatus.textContent = 'Player stopped. Attempting to restart playback...';
+                uploadStatus.className = '';
+
+                // Then, try to play again (which effectively restarts if it was playing or starts if it was stopped)
+                // We wait a very short moment to ensure the stop command has fully processed on the backend
+                await new Promise(resolve => setTimeout(resolve, 200)); 
+                const playResponse = await fetchAPI('/control/play', 'POST');
+
+                if (playResponse && playResponse.isPlaying) {
+                    uploadStatus.textContent = 'MPlayer process effectively restarted (stopped and started).';
+                    uploadStatus.className = 'success-message';
+                } else if (playResponse && playResponse.status === "playlist_empty") {
+                    uploadStatus.textContent = 'Player stopped. Playlist is empty, cannot restart playback.';
+                    uploadStatus.className = 'success-message';
+                }
+                else {
+                    uploadStatus.textContent = playResponse?.error || 'Failed to restart playback after stopping.';
+                    uploadStatus.className = 'error-message';
+                }
             } else {
-                uploadStatus.textContent = response.error || 'Failed to initiate MPlayer restart.';
+                uploadStatus.textContent = stopResponse?.error || 'Failed to stop MPlayer as part of restart.';
                 uploadStatus.className = 'error-message';
             }
             setTimeout(fetchAndRefreshStatus, 1500); // Give MPlayer time to restart before refreshing status

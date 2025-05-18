@@ -364,6 +364,31 @@ def control_stop():
     if mplayer.stop():
         is_playing = False
         current_media_index = -1
+        try:
+            # Clear the framebuffer after stopping MPlayer
+            logger.info("Attempting to clear framebuffer...")
+            fb_width, fb_height, fb_bpp = 240, 320, 16  # Defaults
+            fb_size = fb_width * fb_height * (fb_bpp // 8)
+            fb_clear_command = ["dd", "if=/dev/zero", "of=/dev/fb0", f"bs={fb_size}", "count=1"]
+            process = subprocess.Popen(fb_clear_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = process.communicate(timeout=5) # Add a timeout
+            if process.returncode == 0:
+                logger.info("Framebuffer cleared successfully.")
+            else:
+                logger.error(f"Failed to clear framebuffer. Return code: {process.returncode}")
+                if stdout:
+                    logger.error(f"Framebuffer clear stdout: {stdout.decode().strip()}")
+                if stderr:
+                    logger.error(f"Framebuffer clear stderr: {stderr.decode().strip()}")
+        except subprocess.TimeoutExpired:
+            logger.error("Framebuffer clear command timed out.")
+            if process:
+                process.kill() # Ensure the process is killed if it times out
+                process.communicate() # Clean up
+        except FileNotFoundError:
+            logger.warning("dd command not found. Framebuffer not cleared. This is expected if not on a system with /dev/fb0.")
+        except Exception as e:
+            logger.error(f"An error occurred while trying to clear framebuffer: {e}")
         logger.info("Playback stopped. MPlayer terminated. Index reset.")
         return jsonify({"status": "stopped"})
     else:
@@ -610,11 +635,6 @@ def set_loop_mode():
     
     return jsonify(get_playlist_data_for_response())
 
-@app.route('/api/control/loop_file', methods=['POST'])
-def loop_current_file():
-    """Not supported: MPlayer does not support single-file loop in this implementation."""
-    logger.warning("Loop file not supported in MPlayer implementation.")
-    return jsonify({"warning": "Loop file not supported in this player implementation."}), 200
 
 @app.route('/api/playlist/delete', methods=['POST'])
 def api_playlist_delete():
