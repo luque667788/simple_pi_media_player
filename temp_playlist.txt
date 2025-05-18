@@ -1,4 +1,0 @@
-/home/pi/development/simple_pi_media_player/app/uploads/VID-20250409-WA0025.mp4
-/home/pi/development/simple_pi_media_player/app/uploads/Screencast From 2025-01-30 15-31-14.mp4
-/home/pi/development/simple_pi_media_player/app/uploads/Screencast From 2025-02-06 10-33-00(1).mp4
-/home/pi/development/simple_pi_media_player/app/uploads/20250513_130757.mp4

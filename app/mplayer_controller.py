@@ -87,14 +87,26 @@ class MPlayerController:
         cmd = ["mplayer"]
 
         if target_device == "raspberrypi":
-            cmd.extend([
-                "-vo", "fbdev:/dev/fb0", # Corrected usage for framebuffer
+            rpi_options = [
+                "-vo", "fbdev:/dev/fb0",
                 "-x", "240",
                 "-y", "320",
                 "-bpp", "16",
                 "-vf", "scale=240:320"
-            ])
-            logger.info("Configuring MPlayer for Raspberry Pi (framebuffer)")
+            ]
+            
+            # Configurable performance options from .env
+            enable_framedrop = os.getenv("MPLAYER_RPI_ENABLE_FRAMEDROP", "true").lower() == "true"
+            lavdopts_string = os.getenv("MPLAYER_RPI_LAVDOPTS", "lowres=1:fast:skiploopfilter=all")
+
+            if enable_framedrop:
+                rpi_options.append("-framedrop")
+            
+            if lavdopts_string and lavdopts_string.strip():
+                rpi_options.extend(["-lavdopts", lavdopts_string.strip()])
+            
+            cmd.extend(rpi_options)
+            logger.info(f"Configuring MPlayer for Raspberry Pi (framebuffer) with options: {' '.join(rpi_options)}")
         else: # Default to laptop (X11)
             cmd.extend([
                 "-vo", "x11",

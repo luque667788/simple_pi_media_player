@@ -1,6 +1,6 @@
 __pycache__/
 *.log
 playlist.json
-tempplaylist.json
+temp_playlist.json
 *.fifo
 videoplayer/
