@@ -25,6 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshStatusButton = document.getElementById('refreshStatusButton');
     const restartMpvButton = document.getElementById('restartMpvButton');
     
+    // Upload overlay elements
+    const uploadOverlay = document.getElementById('uploadOverlay');
+    const overlayStatusText = document.getElementById('overlayStatusText');
+
     // Application state
     let editMode = false;
 
@@ -256,12 +260,34 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const formData = new FormData();
-        for (const file of mediaUploadInput.files) {
-            formData.append('mediaFiles', file);
+        // Since we changed to single file upload, we only take the first file.
+        if (mediaUploadInput.files[0]) {
+            formData.append('mediaFiles', mediaUploadInput.files[0]);
+        } else {
+            uploadStatus.textContent = 'No file selected.';
+            uploadStatus.className = 'error-message';
+            return;
         }
+
+        // Show overlay
+        overlayStatusText.textContent = 'Uploading and transcoding video... Please wait.';
+        uploadOverlay.style.display = 'flex';
+        // Disable all buttons and inputs during upload
+        document.querySelectorAll('button, input, select').forEach(el => el.disabled = true);
+
+
         uploadStatus.textContent = 'Uploading...';
         uploadStatus.className = '';
         const response = await fetchAPI('/upload', 'POST', formData);
+
+        // Hide overlay
+        uploadOverlay.style.display = 'none';
+        // Re-enable all buttons and inputs
+        document.querySelectorAll('button, input, select').forEach(el => el.disabled = false);
+        // Refresh status to correctly set disabled states based on player state
+        fetchAndRefreshStatus();
+
+
         if (response) {
             uploadStatus.textContent = response.message || 'Upload processed.';
             if (response.errors && response.errors.length > 0) {
@@ -272,6 +298,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             mediaUploadInput.value = ''; // Clear file input
             fetchAndRefreshStatus(); // Refresh playlist and status
+        } else {
+            // If fetchAPI returned null, it already set an error message in uploadStatus
+            // but we ensure the overlay is hidden and inputs are re-enabled.
         }
     });
 
