@@ -14,7 +14,7 @@ source "$APP_DIR/videoplayer/bin/activate"
 # For a Raspberry Pi, 2-4 workers are usually a good starting point.
 # Bind to 0.0.0.0 to make it accessible from other devices on your network.
 echo "Starting Gunicorn..."
-gunicorn --workers 3 \
+gunicorn --workers 1 \
          --bind 0.0.0.0:5000 \
          --log-level=info \
          --access-logfile "$APP_DIR/$LOG_FILE" \
