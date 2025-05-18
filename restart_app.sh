@@ -2,7 +2,7 @@
 
 APP_DIR=$(pwd)
 
-echo "Restarting Kanga Media Player..."
+echo "Restarting Simple Media Player..."
 
 # Stop the application
 "$APP_DIR/stop_app.sh"
@@ -13,4 +13,4 @@ sleep 2
 # Start the application
 "$APP_DIR/run_prod.sh"
 
-echo "Kanga Media Player restart sequence complete."
+echo "Simple Media Player restart sequence complete."
