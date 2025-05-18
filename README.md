@@ -20,28 +20,36 @@ A simple web-based media player controller for video playback.
 ## Usage
 
 1.  Start the Flask application: `python -m app.main`
-2.  Access the web interface at: http://raspberrypi.local:5000
+2.  Access the web interface by navigating to `http://raspberrypi.local:5000` in your browser.
 3.  Upload videos using the upload section.
-4.  Use the playback controls to manage video playback.
+4.  Use the playback controls to manage video playback:
+    - Play/Pause: Control current playback
+    - Stop: Clears the screen and stops playback completely
+    - Next/Previous: Navigate through playlist items
+    - Loop settings: Enable looping for single files or entire playlists
 5.  Click "Edit Playlist" to rearrange your playlist.
 
 ## Technical Details
 
--   Built with Flask backend
--   Uses MPlayer for video playback
--   Persistent playlist storage with JSON
--   Real-time UI updates
--   maps to frame buffer fb0.
--   Provides logs to file in case of debugging problems
+-   Built with Flask backend for responsive web control
+-   Uses MPlayer for optimized video playback on resource-constrained devices
+-   Persistent playlist storage with JSON for reliable operation
+-   Real-time UI updates for synchronized control experience
+-   Maps directly to frame buffer fb0 for direct display output
+-   Provides detailed logs to file for troubleshooting and debugging
+-   Configured as a systemd service for automatic startup on boot
 
 ## Performance Optimization (Raspberry Pi)
 
 To improve performance on resource-constrained devices like the Raspberry Pi, two main strategies are employed:
 
-1.  **Video Transcoding (Offline)**:
-    *   A bash script `transcode_videos.sh` is provided to convert videos to a more Pi-friendly format.
-    *   This script uses `ffmpeg` to reduce resolution, frame rate, and bitrate.
-    *   **WARNING**: This script **OVERWRITES** the original video files in the input directory (specified by `FFMPEG_INPUT_DIR`, default `app/uploads/`) with their transcoded versions. Make sure you have backups if you need the original high-quality files.
+1.  **Video Transcoding**:
+    *   When videos are uploaded via the web interface, they undergo automatic transcoding to optimize for the Pi's display and processing capabilities.
+    *   This process resizes videos to match the display resolution (typically 240x320), reduces framerate to 15-20 FPS, and lowers color depth and bitrates.
+    *   These optimizations are necessary because the Raspberry Pi decodes video on the CPU and the SPI display interface has bandwidth limitations.
+    *   For offline batch processing, a bash script `transcode_videos.sh` is provided.
+    *   Transcoding Time: Small videos (~10MB) take about 10 seconds, while larger files (~100MB) may take several minutes.
+    *   **WARNING**: The `transcode_videos.sh` script **OVERWRITES** the original video files in the input directory (specified by `FFMPEG_INPUT_DIR`, default `app/uploads/`) with their transcoded versions. Make sure you have backups if you need the original high-quality files.
     *   **Usage**: Run `./transcode_videos.sh` from the project root. The script will give you a 5-second countdown to cancel before starting.
     *   The script reads configuration from the `.env` file (see below).
 
@@ -82,3 +90,47 @@ FFMPEG_AUDIO_CODEC="aac"
 2.  Run the installation script: `./install.sh`
     *   This will install `mplayer`, `ffmpeg`, and Python dependencies.
 3.  Activate the virtual environment: `source videoplayer/bin/activate`
+
+## System Setup Reference
+
+The project includes an `OS_setup.sh` script that serves as a reference for how the Raspberry Pi system is configured. While we recommend using the pre-built image, this script documents the setup process if you want to start from a fresh Raspberry Pi OS installation.
+
+### What the Setup Script Does
+
+1. **System Configuration**:
+   - Updates and upgrades the system packages
+   - Installs required tools (git, curl, raspi-config)
+   - Enables SSH for remote access
+   - Enables SPI and I2C interfaces required for the display
+
+2. **Display Configuration**:
+   - Configures the ST7789V SPI display by adding framebuffer overlay to `/boot/firmware/config.txt`
+   - Sets up resolution, pin connections, and rotation parameters
+   - Updates framebuffer console mapping in boot command line
+   - **Important**: Disables HDMI video output (`hdmi_blanking=2`) to save resources and prevent conflicts
+   
+3. **Audio Configuration**:
+   - Note that while HDMI video is disabled, audio through HDMI port 0 is still available
+   - If you need audio output, connect to the HDMI port and configure audio settings as needed
+
+4. **Network Setup**:
+   - Includes manual step for installing RaspAP for Wi-Fi hotspot functionality
+   - This must be done manually by running: `curl -sL https://install.raspap.com | bash`
+
+5. **Application Installation**:
+   - Creates development folder and clones the media player repository
+   - Runs the installation script to set up dependencies
+   - Configures a systemd service for automatic startup
+
+### Manual Steps Required
+
+Even if using the setup script, some manual intervention is required:
+
+1. You must manually install RaspAP when prompted
+2. A system reboot is recommended after running the script
+3. If framebuffer device `/dev/fb0` is not detected immediately, a reboot will be necessary
+4. You may need to adjust permissions or system settings based on your specific Raspberry Pi model
+
+### Note on HDMI Configuration
+
+The script intentionally disables HDMI video output to ensure all resources are directed to the SPI display. If you require both displays or want to re-enable HDMI, you'll need to remove or modify the `hdmi_blanking=2` line in `/boot/firmware/config.txt`.
