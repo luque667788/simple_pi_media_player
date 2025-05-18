@@ -33,5 +33,8 @@ deactivate
 # Make other scripts executable
 chmod +x run_prod.sh stop_app.sh restart_app.sh transcode_videos.sh # Added transcode_videos.sh
 
+# Make all .sh scripts executable
+chmod +x /home/pi/development/simple_pi_media_player/*.sh
+
 echo "Installation complete."
 echo "To activate the environment, run: source videoplayer/bin/activate"
