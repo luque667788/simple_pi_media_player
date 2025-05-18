@@ -59,7 +59,7 @@ Once the Raspberry Pi boots up with the flashed SD card, it creates a Wi-Fi hots
 
 2. **Accessing the RaspAp Web Interface**:
    - After connecting to the Raspberry Pi's Wi-Fi network, open a web browser.
-   - Navigate to: http://raspberrypi.local (Alternatively, use http://10.3.141.1 when in hotspot mode).
+   - Navigate to: http://raspberrypi.local
    - Log in using the credentials provided in the previous section.
 
 3. **Using RaspAp**:
