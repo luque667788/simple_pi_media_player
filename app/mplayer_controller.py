@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 MPLAYER_LOG_PATH = os.path.join(PROJECT_ROOT, "mplayer.log")
 MPLAYER_FIFO_PATH = os.path.join(PROJECT_ROOT, "mplayer.fifo") # FIFO pipe for MPlayer communication
-load_dotenv(os.path.join(PROJECT_ROOT, '.env')) # Initialize environment configuration
+load_dotenv(os.path.join(PROJECT_ROOT, '.env'), override=True) # Initialize environment configuration
 
 class MPlayerController:
     def __init__(self):
