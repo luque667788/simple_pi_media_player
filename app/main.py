@@ -5,10 +5,10 @@ import time # Import for time-related functions
 import atexit # Import for registering cleanup functions
 
 # Custom logging configuration
-from logging_config import setup_logging
+from .logging_config import setup_logging
 
 # Use MPlayerController for media playback management
-from mplayer_controller import MPlayerController
+from .mplayer_controller import MPlayerController
 
 # Initialize Flask application with specified template and static directories
 app = Flask(__name__, template_folder='templates', static_folder='static')
