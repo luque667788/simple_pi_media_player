@@ -104,6 +104,37 @@ button:disabled {
     cursor: pointer;
 }
 
+/* Styles for when playlist items are NOT clickable (i.e., loop_mode is 'playlist' and not in edit mode) */
+#playlistUl.playlist-view-mode-active li .play-title {
+    cursor: default;
+    text-decoration: none;
+    color: #333; /* Default text color */
+    font-weight: normal; /* Default font weight */
+}
+
+#playlistUl.playlist-view-mode-active li:hover .play-title {
+    color: #333; /* Keep text color the same on hover */
+    text-decoration: none; /* Ensure no underline on hover */
+    font-weight: normal; /* Ensure font weight doesn't change on hover */
+}
+
+#playlistUl.playlist-view-mode-active li:hover {
+    background-color: transparent; /* Remove background highlight on hover for the li itself */
+}
+
+/* Default hover effects for playlist items when they ARE clickable */
+#playlistUl:not(.playlist-view-mode-active):not(.edit-mode) li:hover {
+    background-color: #f0f0f0; /* Standard hover background */
+}
+
+#playlistUl:not(.playlist-view-mode-active):not(.edit-mode) li .play-title:hover {
+    color: #007bff; /* Standard hover text color */
+    text-decoration: underline; /* Standard hover text decoration */
+    font-weight: bold; /* Standard hover font weight */
+    cursor: pointer; /* Standard hover cursor */
+}
+
+
 .play-next-btn {
     padding: 5px 10px;
     font-size: 0.85em;

@@ -20,3 +20,8 @@ else
   done
   echo "Gunicorn stopped."
 fi
+
+# Clear the framebuffer
+echo "Clearing framebuffer..."
+dd if=/dev/zero of=/dev/fb0 bs=4k
+echo "Framebuffer cleared."

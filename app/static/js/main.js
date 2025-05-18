@@ -76,8 +76,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add or remove edit-mode class based on current mode
         if (editMode) {
             playlistUl.classList.add('edit-mode');
+            playlistUl.classList.remove('playlist-view-mode-active'); // Ensure this is off in edit mode
         } else {
             playlistUl.classList.remove('edit-mode');
+            // Add a specific class if in playlist loop mode and not editing
+            if (loop_mode === 'playlist') {
+                playlistUl.classList.add('playlist-view-mode-active');
+            } else {
+                playlistUl.classList.remove('playlist-view-mode-active');
+            }
         }
         
         playlist.forEach((item, index) => {
@@ -112,9 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 li.classList.add('playing');
             }
             
-            // Only add click event in non-edit mode
-            if (!editMode) {
-                playSpan.addEventListener('click', () => playSpecificFile(item));
+            // Only add click event if NOT in editMode AND loop_mode is NOT 'playlist'
+            if (!editMode && loop_mode !== 'playlist') {
+               playSpan.addEventListener('click', () => playSpecificFile(item));
             }
 
             // Add delete button (only visible in edit mode or if nothing is playing)
@@ -406,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // First stop the player if it's running
         const response = await fetchAPI('/control/stop', 'POST');
         if (response) {
-            uploadStatus.textContent = 'Entered edit mode. Player stopped.';
+            uploadStatus.textContent = 'Entered edit mode. Player stopped. After saving, press Play to restart playback.';
             uploadStatus.className = 'success-message';
             enableEditMode();
         }
@@ -420,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Send the new playlist order to the backend
         const response = await fetchAPI('/playlist/reorder', 'POST', { order: newOrder });
         if (response && response.status === "reordered") {
-            uploadStatus.textContent = 'Playlist order saved successfully.';
+            uploadStatus.textContent = 'Playlist order saved successfully, press play to restart the playaback.';
             uploadStatus.className = 'success-message';
             disableEditMode();
         } else {
