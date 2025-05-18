@@ -3,6 +3,7 @@ import os # Import for operating system dependent functionalities
 import json # Import for JSON manipulation
 import time # Import for time-related functions
 import atexit # Import for registering cleanup functions
+import subprocess # Import for running external scripts/commands
 
 # Custom logging configuration
 from .logging_config import setup_logging
@@ -175,10 +176,19 @@ def upload_files():
             save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             try:
                 file.save(save_path)
+                logger.info(f"File saved: {save_path}")
+                
+                # Transcode the video after it's uploaded
+                transcode_result = transcode_video(save_path)
+                if transcode_result:
+                    logger.info(f"Video successfully transcoded: {filename}")
+                else:
+                    logger.warning(f"Video transcoding failed or was skipped for: {filename}")
+                
                 if filename not in media_playlist: # Avoid duplicates
                     media_playlist.append(filename)
                 uploaded_filenames.append(filename)
-                logger.info(f"Successfully uploaded and saved: {filename}")
+                logger.info(f"Successfully uploaded, transcoded, and added to playlist: {filename}")
             except Exception as e:
                 logger.error(f"Error saving file {filename}: {e}")
                 errors.append(f"Could not save file {filename}.")
@@ -745,6 +755,52 @@ def api_mplayer_restart():
     except Exception as e:
         logger.error(f"Error restarting MPlayer: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+def transcode_video(file_path):
+    """
+    Transcodes a video file using the transcode_videos.sh script.
+    
+    Args:
+        file_path (str): The path to the video file to transcode
+        
+    Returns:
+        bool: True if transcoding was successful, False otherwise
+    """
+    try:
+        # Only transcode if we're targeting a Raspberry Pi (as defined in .env)
+        target_device = os.getenv("KTV_TARGET_DEVICE", "laptop")
+        if target_device != "raspberrypi":
+            logger.info(f"Skipping transcoding for {file_path} - target device is {target_device}, not raspberrypi")
+            return True
+            
+        transcode_script = os.path.join(PROJECT_ROOT, "transcode_videos.sh")
+        
+        if not os.path.exists(transcode_script):
+            logger.error(f"Transcoding script not found: {transcode_script}")
+            return False
+            
+        logger.info(f"Starting transcoding for {file_path}")
+        
+        # Run the transcoding script with the video file as an argument
+        # We use subprocess.run() instead of os.system() for better error handling
+        result = subprocess.run(
+            [transcode_script, file_path],
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode == 0:
+            logger.info(f"Successfully transcoded: {file_path}")
+            logger.debug(f"Transcode output: {result.stdout}")
+            return True
+        else:
+            logger.error(f"Transcoding failed for {file_path} with exit code {result.returncode}")
+            logger.error(f"Error output: {result.stderr}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Exception during transcoding for {file_path}: {e}")
+        return False
 
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
