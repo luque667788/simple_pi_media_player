@@ -57,6 +57,12 @@
             <button id="restartMpvButton">Restart MPlayer Process</button>
         </div>
 
+        <div class="section" id="server-controls-section">
+            <h2>Server Controls</h2>
+            <button id="endServerButton" title="This will stop the media player server. A manual reboot or command-line intervention will be required to restart it.">End Server</button>
+            <p class="description">Stops the underlying server process. A reboot or manual command (<code>sudo systemctl start simple_media_player.service</code>) will be needed to restart it.</p>
+        </div>
+
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const mpvProcessStatusSpan = document.getElementById('mpvProcessStatus');
     const refreshStatusButton = document.getElementById('refreshStatusButton');
     const restartMpvButton = document.getElementById('restartMpvButton');
-    
+    const endServerButton = document.getElementById('endServerButton'); // Added this line
+
     // Upload overlay elements
     const uploadOverlay = document.getElementById('uploadOverlay');
     const overlayStatusText = document.getElementById('overlayStatusText');
@@ -258,6 +259,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data) {
             updateStatusUI(data);
         }
+    }
+
+    if (endServerButton) {
+        endServerButton.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to stop the server? You will need to reboot or use the command line to restart it.')) {
+                const response = await fetchAPI('/server/stop', 'POST');
+                if (response && response.status === 'stopping') {
+                    alert('Server is stopping. The page might become unresponsive.');
+                    // Optionally, disable UI elements here
+                    document.querySelectorAll('button, input, select').forEach(el => el.disabled = true);
+                } else {
+                    alert('Failed to send stop command to server or server already stopped.');
+                }
+            }
+        });
     }
 
     uploadButton.addEventListener('click', async () => {

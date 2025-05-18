@@ -10,7 +10,9 @@ echo "Restarting Simple Media Player..."
 # Wait a moment to ensure it has stopped
 sleep 2
 
-# Start the application
-"$APP_DIR/run_prod.sh"
+# For systemctl, we don't need to start the application in this script
+# systemctl will handle starting the service after stopping it
+# Instead, just make this script exit successfully
 
-echo "Simple Media Player restart sequence complete."
+echo "Simple Media Player stopped, systemctl will now start it again."
+exit 0

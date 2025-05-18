@@ -689,8 +689,8 @@ def api_playlist_delete():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/playlist/reorder', methods=['POST'])
-def api_playlist_reorder():
-    """Reorders the playlist based on the provided new order."""
+def reorder_playlist_items():
+    """Reorders items in the playlist based on a new list of filenames."""
     global media_playlist
     
     try:
@@ -722,35 +722,56 @@ def api_playlist_reorder():
         })
         
     except Exception as e:
-        logger.error(f"Error in reorder API: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Error reordering playlist: {e}")
+        return jsonify({"error": "Failed to reorder playlist"}), 500
 
-
-# Synchronize playlist after loading and before starting app
-synchronize_playlist_with_uploads()
-
-import atexit
-def cleanup_on_exit():
-    """Ensures MPlayer is terminated when the Flask application exits."""
-    logger.info("Flask application is exiting. Terminating MPlayer.")
-    mplayer.terminate_player()
-atexit.register(cleanup_on_exit)
-
-@app.route('/api/mplayer/restart', methods=['POST'])
-def api_mplayer_restart():
-    """Restarts the MPlayer process via API call."""
+@app.route('/api/server/stop', methods=['POST'])
+def stop_server():
+    """Stops the systemd service for this application."""
     try:
-        logger.info("Attempting to restart MPlayer...")
-        mplayer.terminate_player()  # Stop the current player instance
-        time.sleep(0.5)  # Give it a moment to release resources
-        # The player will be restarted automatically when the next code action requires it (e.g., play)
-        # Or, if you have a specific method to re-initialize or ensure it's ready:
-        # mplayer.ensure_player_is_running() # This would be a new method in MPlayerController
-        logger.info("MPlayer restart process initiated. Player will start on next action.")
-        return jsonify({"status": "mplayer_restarted", "message": "MPlayer process will restart on next action."}), 200
+        logger.info("Received request to stop the server via systemctl.")
+        # It's crucial that the user running this Flask app (e.g., 'pi')
+        # has sudo privileges to run systemctl stop without a password.
+        # This typically involves configuring /etc/sudoers or /etc/sudoers.d/
+        # Example sudoers entry: pi ALL=(ALL) NOPASSWD: /bin/systemctl stop simple_media_player.service
+        command = ["sudo", "systemctl", "stop", "simple_media_player.service"]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+
+        if process.returncode == 0:
+            logger.info("Successfully issued systemctl stop command.")
+            return jsonify({"status": "stopping", "message": "Server stop command issued."}), 200
+        else:
+            logger.error(f"Failed to stop server via systemctl. Return code: {process.returncode}")
+            logger.error(f"Stderr: {stderr.decode().strip()}")
+            logger.error(f"Stdout: {stdout.decode().strip()}")
+            return jsonify({
+                "status": "error", 
+                "message": "Failed to issue server stop command.",
+                "error_details": stderr.decode().strip()
+            }), 500
     except Exception as e:
-        logger.error(f"Error restarting MPlayer: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Exception while trying to stop server: {e}")
+        return jsonify({"status": "error", "message": "An unexpected error occurred."}), 500
+
+# --- MPlayer Process Management ---
+def start_mplayer_process_if_not_running():
+    """Starts the MPlayer process if it's not already running."""
+    global mplayer
+
+    status = mplayer.get_playback_status()
+    if status.get('mplayer_is_running'):
+        logger.info("MPlayer is already running.")
+        return True
+
+    logger.info("Starting MPlayer process...")
+    # Attempt to start the MPlayer process
+    if mplayer.start():
+        logger.info("MPlayer process started successfully.")
+        return True
+    else:
+        logger.error("Failed to start MPlayer process.")
+        return False
 
 def transcode_video(file_path):
     """
