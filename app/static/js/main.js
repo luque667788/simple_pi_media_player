@@ -328,6 +328,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function playSpecificFile(filename) {
+        uploadStatus.textContent = `Stopping current playback to play "${filename}"...`;
+        uploadStatus.className = '';
+        const stopResp = await fetchAPI('/control/stop', 'POST');
+
+        if (!stopResp || (stopResp.status !== "stopped" && stopResp.currentFile !== null && stopResp.status !== "playlist_empty")) {
+            uploadStatus.textContent = stopResp?.error || `Failed to stop player before playing "${filename}".`;
+            uploadStatus.className = 'error-message';
+            fetchAndRefreshStatus(); // Refresh status to reflect actual state
+            return;
+        }
+
+        // Wait a brief moment to ensure the stop command is processed
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        uploadStatus.textContent = `Playing "${filename}"...`;
+        uploadStatus.className = '';
         const response = await fetchAPI('/control/play', 'POST', { filename });
         if (response) updateStatusUI(response);
         fetchAndRefreshStatus(); // Get full status update
@@ -371,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchAndRefreshStatus();
             return;
         }
-        uploadStatus.textContent = 'MPlayer process stopped.';
+        uploadStatus.textContent = 'MPlayer process stopped. Setting screen to black. Press play to start again.';
         fetchAndRefreshStatus();
     });
 
@@ -434,7 +450,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 await new Promise(resolve => setTimeout(resolve, 200)); 
                 const playResponse = await fetchAPI('/control/play', 'POST');
 
-                if (playResponse && playResponse.isPlaying) {
+                if (playResponse && playResponse.status === "playing") {
+                    updateStatusUI(playResponse);
+                    // Update the status message to indicate successful restart
                     uploadStatus.textContent = 'MPlayer process effectively restarted (stopped and started).';
                     uploadStatus.className = 'success-message';
                 } else if (playResponse && playResponse.status === "playlist_empty") {
