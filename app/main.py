@@ -71,7 +71,7 @@ def save_playlist_to_file():
 load_playlist_from_file()
 
 # --- MPlayer Controller Instance ---
-mpv = MPlayerController() # Instantiate controller for MPlayer operations
+mplayer = MPlayerController() # Instantiate controller for MPlayer operations
 
 # --- Playlist Synchronization Utility ---
 def synchronize_playlist_with_uploads():
@@ -212,44 +212,44 @@ def get_playlist():
     """Returns the current playlist and playback status as JSON."""
     global current_loop_mode, current_media_index, is_playing, media_playlist, loop_playlist
 
-    mpv_status = mpv.get_playback_status()
+    mplayer_status = mplayer.get_playback_status()
     
     # MPlayer doesn't have internal playlist management, so we need to simplify this
-    
-    mpv_is_running = mpv_status.get('is_mpv_running', False)
-    actual_current_file_from_mpv = None
-    is_mpv_playing_media = False
 
-    if mpv_is_running:
-        actual_current_file_from_mpv = mpv_status.get('current_file')
-        is_mpv_playing_media = mpv_status.get('is_playing_media', False)
+    mplayer_is_running = mplayer_status.get('mplayer_is_running', False)
+    actual_current_file_from_mplayer = None
+    is_mplayer_playing_media = False
+
+    if mplayer_is_running:
+        actual_current_file_from_mplayer = mplayer_status.get('current_file')
+        is_mplayer_playing_media = mplayer_status.get('is_playing_media', False)
         
         # MPlayer doesn't have playlist position, so we need to rely on our own tracking
-        if actual_current_file_from_mpv and actual_current_file_from_mpv in media_playlist:
+        if actual_current_file_from_mplayer and actual_current_file_from_mplayer in media_playlist:
             try:
-                current_media_index = media_playlist.index(actual_current_file_from_mpv)
+                current_media_index = media_playlist.index(actual_current_file_from_mplayer)
             except ValueError:
-                logger.warning(f"MPlayer playing {actual_current_file_from_mpv}, in Flask playlist but index() failed.")
+                logger.warning(f"MPlayer playing {actual_current_file_from_mplayer}, in Flask playlist but index() failed.")
         
     # Update Flask's global is_playing state based on MPlayer's actual state
-    if is_playing != is_mpv_playing_media and mpv_is_running:
-        logger.info(f"Flask's is_playing ({is_playing}) differs from MPlayer's ({is_mpv_playing_media}). Updating Flask's state.")
-        is_playing = is_mpv_playing_media
+    if is_playing != is_mplayer_playing_media and mplayer_is_running:
+        logger.info(f"Flask's is_playing ({is_playing}) differs from MPlayer's ({is_mplayer_playing_media}). Updating Flask's state.")
+        is_playing = is_mplayer_playing_media
 
     # If MPlayer is not running, reflect that.
-    if not mpv_is_running and is_playing:
+    if not mplayer_is_running and is_playing:
         is_playing = False
         current_media_index = -1 # Reset index if MPlayer died
         logger.info("MPlayer is not running. Setting is_playing to False and resetting index.")
 
     # Fallback for currentFile if not accurately determined from MPlayer
-    display_current_file = actual_current_file_from_mpv
+    display_current_file = actual_current_file_from_mplayer
     if display_current_file is None and 0 <= current_media_index < len(media_playlist):
         display_current_file = media_playlist[current_media_index]
     elif display_current_file is None and not media_playlist:
         display_current_file = None
 
-    is_paused = mpv_status.get('is_paused', False) if mpv_is_running else False
+    is_paused = mplayer_status.get('is_paused', False) if mplayer_is_running else False
     
     return jsonify({
         "playlist": media_playlist,
@@ -257,7 +257,7 @@ def get_playlist():
         "isPlaying": is_playing, # Use the synced is_playing state
         "isPaused": is_paused,  # Include paused state
         "loop_mode": current_loop_mode,
-        "mpv_is_running": mpv_is_running,
+        "mplayer_is_running": mplayer_is_running,
         "currentIndex": current_media_index # For UI highlighting
     })
 
@@ -267,12 +267,12 @@ def control_play():
     global current_media_index, is_playing, media_playlist, current_loop_mode # current_loop_mode is main.py's perspective
     
     # First check if MPlayer is running and paused - if so, just unpause it
-    controller_status = mpv.get_playback_status()
-    if (controller_status.get('is_mpv_running') and 
+    controller_status = mplayer.get_playback_status()
+    if (controller_status.get('mplayer_is_running') and 
         controller_status.get('is_paused') and 
         controller_status.get('is_playing_media')):
         logger.info("Play command: MPlayer is paused. Unpausing instead of loading.")
-        if mpv.play():  # Use the play() method which will unpause if paused
+        if mplayer.play():  # Use the play() method which will unpause if paused
             is_playing = True
             return jsonify({
                 "status": "playing", 
@@ -302,7 +302,7 @@ def control_play():
     file_to_play = media_playlist[current_media_index]
     
     # Get the loop mode directly from the MPlayerController instance
-    controller_status = mpv.get_playback_status() 
+    controller_status = mplayer.get_playback_status() 
     actual_controller_loop_mode = controller_status.get('loop_mode')
 
     logger.info(f"Play command: Attempting to play '{file_to_play}' at index {current_media_index}. Main's current_loop_mode: {current_loop_mode}. Controller's actual_loop_mode: {actual_controller_loop_mode}")
@@ -310,11 +310,11 @@ def control_play():
     playback_started = False
     if actual_controller_loop_mode == 'playlist': # Use the controller's actual reported loop mode
         logger.info(f"Initiating playback with playlist mode (based on controller state). Full playlist will be loaded starting at index {current_media_index}.")
-        if mpv.load_playlist(media_playlist, current_media_index):
+        if mplayer.load_playlist(media_playlist, current_media_index):
             playback_started = True
     else:
         logger.info(f"Controller's loop mode is '{actual_controller_loop_mode}', not 'playlist'. Falling back to load_file for '{file_to_play}'.")
-        if mpv.load_file(file_to_play):
+        if mplayer.load_file(file_to_play):
             playback_started = True
 
     if playback_started:
@@ -329,11 +329,11 @@ def control_play():
 def control_pause():
     """Handles pause requests for the current playback session."""
     global is_playing
-    
-    if not mpv.get_playback_status().get('is_mpv_running'):
+
+    if not mplayer.get_playback_status().get('mplayer_is_running'):
         return jsonify({"error": "MPlayer is not running"}), 503
     
-    if mpv.pause():
+    if mplayer.pause():
         logger.info("Playback paused")
         is_playing = False  # Update global play state
         return jsonify({"status": "paused"})
@@ -344,12 +344,12 @@ def control_pause():
 def control_toggle_pause():
     """Toggles between play and pause states."""
     global is_playing
-    
-    if not mpv.get_playback_status().get('is_mpv_running'):
+
+    if not mplayer.get_playback_status().get('mplayer_is_running'):
         return jsonify({"error": "MPlayer is not running"}), 503
     
-    if mpv.toggle_pause():
-        status = mpv.get_playback_status()
+    if mplayer.toggle_pause():
+        status = mplayer.get_playback_status()
         is_playing = not status.get('is_paused', False)  # Update global play state
         state = "paused" if status.get('is_paused', False) else "playing"
         logger.info(f"Toggled pause state. Current state: {state}")
@@ -361,14 +361,14 @@ def control_toggle_pause():
 def control_stop():
     """Stops playback and resets playback state."""
     global is_playing, current_media_index
-    if mpv.stop():
+    if mplayer.stop():
         is_playing = False
         current_media_index = -1
         logger.info("Playback stopped. MPlayer terminated. Index reset.")
         return jsonify({"status": "stopped"})
     else:
         logger.warning("Failed to send stop command to MPlayer.")
-        if not mpv.get_playback_status().get('is_mpv_running'):
+        if not mplayer.get_playback_status().get('mplayer_is_running'):
             return jsonify({"error": "MPlayer is not running."}), 503
         return jsonify({"error": "Failed to stop playback."}), 500
 
@@ -380,12 +380,12 @@ def _play_next_or_prev(direction, from_auto_advance=False):
     global current_media_index, is_playing, media_playlist, loop_playlist, current_loop_mode
 
     # Use MPlayer's native playlist navigation if in playlist mode and MPlayer is running
-    controller_status = mpv.get_playback_status()
-    if controller_status.get('loop_mode') == 'playlist' and controller_status.get('is_mpv_running'):
+    controller_status = mplayer.get_playback_status()
+    if controller_status.get('loop_mode') == 'playlist' and controller_status.get('mplayer_is_running'):
         if direction == "next":
-            success = mpv.playlist_next()
+            success = mplayer.playlist_next()
         else:
-            success = mpv.playlist_prev()
+            success = mplayer.playlist_prev()
         if success:
             logger.info(f"Sent pt_step command to MPlayer for {direction} in playlist mode.")
             return jsonify(get_playlist_data_for_response())
@@ -405,7 +405,7 @@ def _play_next_or_prev(direction, from_auto_advance=False):
 
     if not media_playlist:
         logger.info(f"Next/Prev called but playlist is empty.")
-        mpv.stop()
+        mplayer.stop()
         is_playing = False
         return jsonify({"status": "playlist_empty"}), 400
 
@@ -425,7 +425,7 @@ def _play_next_or_prev(direction, from_auto_advance=False):
                 logger.info("Reached end of Flask playlist, looping to start.")
             else:
                 logger.info("Reached end of Flask playlist, no loop. Stopping.")
-                mpv.stop()
+                mplayer.stop()
                 is_playing = False
                 current_media_index = num_items - 1 # Stay on last item visually
                 return jsonify({"status": "playlist_ended", "currentFile": media_playlist[current_media_index], "currentIndex": current_media_index})
@@ -447,14 +447,14 @@ def _play_next_or_prev(direction, from_auto_advance=False):
 
     file_to_play = media_playlist[current_media_index]
     logger.info(f"Changing track ({direction}) via Flask to: {file_to_play} at index {current_media_index}")
-    if mpv.load_file(file_to_play):
+    if mplayer.load_file(file_to_play):
         is_playing = True
         logger.info(f"Successfully loaded and started {file_to_play} for {direction}.")
         return jsonify({"status": f"playing_{direction}", "currentFile": file_to_play, "currentIndex": current_media_index})
     else:
         is_playing = False
         logger.error(f"MPlayer failed to load file for {direction}: {file_to_play}")
-        mpv.stop() # Stop MPlayer if load fails
+        mplayer.stop() # Stop MPlayer if load fails
         current_media_index = original_index # Revert index on failure
         return jsonify({"error": f"MPlayer could not load file '{file_to_play}' for {direction}. Playback stopped."}), 500
 
@@ -463,12 +463,12 @@ def get_playlist_data_for_response():
     global current_media_index, is_playing, media_playlist, current_loop_mode
 
     # Get the latest status from MPlayer
-    mpv_status_internal = mpv.get_playback_status()
-    mpv_is_running_internal = mpv_status_internal.get('is_mpv_running', False)
-    actual_current_file_internal = mpv_status_internal.get('current_file')
-    is_mpv_playing_media_internal = mpv_status_internal.get('is_playing_media', False)
+    mplayer_status_internal = mplayer.get_playback_status()
+    mplayer_is_running_internal = mplayer_status_internal.get('mplayer_is_running', False)
+    actual_current_file_internal = mplayer_status_internal.get('current_file')
+    is_mplayer_playing_media_internal = mplayer_status_internal.get('is_playing_media', False)
 
-    if mpv_is_running_internal:
+    if mplayer_is_running_internal:
         # Check if MPlayer reports a current file
         if actual_current_file_internal:
             if actual_current_file_internal in media_playlist:
@@ -485,9 +485,9 @@ def get_playlist_data_for_response():
                 logger.warning(f"MPlayer reports playing file not in playlist: {actual_current_file_internal}")
         
         # Sync is_playing state with MPlayer
-        if is_playing != is_mpv_playing_media_internal:
-             logger.info(f"Syncing playing state: {is_playing} -> {is_mpv_playing_media_internal}")
-             is_playing = is_mpv_playing_media_internal
+        if is_playing != is_mplayer_playing_media_internal:
+             logger.info(f"Syncing playing state: {is_playing} -> {is_mplayer_playing_media_internal}")
+             is_playing = is_mplayer_playing_media_internal
     else:
         # MPlayer is not running
         if is_playing:
@@ -501,7 +501,7 @@ def get_playlist_data_for_response():
         display_file = media_playlist[current_media_index]
     
     # Get paused state from MPlayer
-    is_paused_internal = mpv_status_internal.get('is_paused', False) if mpv_is_running_internal else False
+    is_paused_internal = mplayer_status_internal.get('is_paused', False) if mplayer_is_running_internal else False
     
     return {
         "playlist": media_playlist,
@@ -509,7 +509,7 @@ def get_playlist_data_for_response():
         "isPlaying": is_playing,
         "isPaused": is_paused_internal,
         "loop_mode": current_loop_mode,
-        "mpv_is_running": mpv_is_running_internal,
+        "mplayer_is_running": mplayer_is_running_internal,
         "currentIndex": current_media_index
     }
 
@@ -589,7 +589,7 @@ def set_loop_mode():
         return jsonify({"error": "Invalid mode. Use 'none', 'file', or 'playlist'"}), 400
     
     # Set the loop mode in the MPlayer controller
-    if mpv.set_loop_mode(mode):
+    if mplayer.set_loop_mode(mode):
         current_loop_mode = mode
         loop_playlist = (mode == 'playlist')
         logger.info(f"Loop mode set to: {mode}")
@@ -600,11 +600,11 @@ def set_loop_mode():
             if mode == 'playlist' and len(media_playlist) > 1:
                 # For playlist mode, we always need to reload to apply loop settings
                 logger.info(f"Loading playlist with {len(media_playlist)} items starting at index {current_media_index}")
-                mpv.load_playlist(media_playlist, current_media_index)
+                mplayer.load_playlist(media_playlist, current_media_index)
             else:
                 # For single file mode or no loop mode, we must reload the current file with the new settings
                 logger.info(f"Loading single file with loop={mode}: {current_file}")
-                mpv.load_file(current_file)
+                mplayer.load_file(current_file)
     else:
         logger.warning(f"Failed to set loop mode to {mode}")
     
@@ -639,7 +639,7 @@ def api_playlist_delete():
         
         if is_deleting_current:
             # Stop playback if currently playing
-            mpv.stop()
+            mplayer.stop()
             is_playing = False
             # If there are other files, we'll need to adjust the index
             if len(media_playlist) > 1:
@@ -682,7 +682,6 @@ def api_playlist_delete():
             "currentFile": media_playlist[current_media_index] if 0 <= current_media_index < len(media_playlist) else None,
             "currentIndex": current_media_index,
             "isPlaying": is_playing,
-            "mpv_is_running": mpv.is_running
         })
         
     except Exception as e:
@@ -719,16 +718,13 @@ def api_playlist_reorder():
         return jsonify({
             "status": "reordered",
             "playlist": media_playlist,
-            "mpv_is_running": mpv.get_playback_status().get('is_mpv_running', False)
+            "mplayer_is_running": mplayer.get_playback_status().get('is_mplayer_running', False)
         })
         
     except Exception as e:
         logger.error(f"Error in reorder API: {str(e)}")
         return jsonify({"error": str(e)}), 500
-@app.teardown_appcontext
-def teardown_mpv(exception=None):
-    """Performs cleanup of the MPlayer process on Flask app context teardown."""
-    pass
+
 
 # Synchronize playlist after loading and before starting app
 synchronize_playlist_with_uploads()
@@ -737,7 +733,7 @@ import atexit
 def cleanup_on_exit():
     """Ensures MPlayer is terminated when the Flask application exits."""
     logger.info("Flask application is exiting. Terminating MPlayer.")
-    mpv.terminate_player()
+    mplayer.terminate_player()
 atexit.register(cleanup_on_exit)
 
 @app.route('/api/mplayer/restart', methods=['POST'])
@@ -745,11 +741,11 @@ def api_mplayer_restart():
     """Restarts the MPlayer process via API call."""
     try:
         logger.info("Attempting to restart MPlayer...")
-        mpv.terminate_player()  # Stop the current player instance
+        mplayer.terminate_player()  # Stop the current player instance
         time.sleep(0.5)  # Give it a moment to release resources
         # The player will be restarted automatically when the next code action requires it (e.g., play)
         # Or, if you have a specific method to re-initialize or ensure it's ready:
-        # mpv.ensure_player_is_running() # This would be a new method in MPlayerController
+        # mplayer.ensure_player_is_running() # This would be a new method in MPlayerController
         logger.info("MPlayer restart process initiated. Player will start on next action.")
         return jsonify({"status": "mplayer_restarted", "message": "MPlayer process will restart on next action."}), 200
     except Exception as e:
@@ -769,9 +765,9 @@ def transcode_video(file_path):
     try:
         # Only transcode if we're targeting a Raspberry Pi (as defined in .env)
         target_device = os.getenv("KTV_TARGET_DEVICE", "laptop")
-        if target_device != "raspberrypi":
-            logger.info(f"Skipping transcoding for {file_path} - target device is {target_device}, not raspberrypi")
-            return True
+        #if target_device != "raspberrypi":
+        #    logger.info(f"Skipping transcoding for {file_path} - target device is {target_device}, not raspberrypi")
+        #    return True
             
         transcode_script = os.path.join(PROJECT_ROOT, "transcode_videos.sh")
         

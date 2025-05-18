@@ -265,7 +265,7 @@ class MPlayerController:
 
 
         return {
-            "is_mpv_running": current_mplayer_process_running,
+            "mplayer_is_running": current_mplayer_process_running,
             "current_file": self.current_file,
             "is_playing_media": self.is_playing_media,
             "is_paused": self.is_paused,
