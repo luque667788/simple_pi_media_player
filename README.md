@@ -20,7 +20,7 @@ A simple web-based media player controller for video playback.
 ## Usage
 
 1.  Start the Flask application: `python -m app.main`
-2.  Access the web interface at: http://localhost:5000
+2.  Access the web interface at: http://raspberrypi.local:5000
 3.  Upload videos using the upload section.
 4.  Use the playback controls to manage video playback.
 5.  Click "Edit Playlist" to rearrange your playlist.
