@@ -39,7 +39,7 @@ Keep these credentials handy for accessing the various components of the system:
   - Username: pi
   - Password: q1w2e3r4
 - **RASPAP Wi-Fi Hotspot (Default)**:
-  - Network Name (SSID): raspap
+  - Network Name (SSID): RASPAP
   - Password: ChangeMe
 - **RASPAP Web Interface** (http://raspberrypi.local):
   - Username: admin
@@ -54,7 +54,7 @@ Keep these credentials handy for accessing the various components of the system:
 Once the Raspberry Pi boots up with the flashed SD card, it creates a Wi-Fi hotspot.
 
 1. **Connect to the Hotspot**:
-   - Search for a Wi-Fi network named "raspap".
+   - Search for a Wi-Fi network named "RASPAP".
    - Connect to this network using the password: ChangeMe.
 
 2. **Accessing the RASPAP Web Interface**:
