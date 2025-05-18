@@ -6,7 +6,7 @@
    - [Initial Setup: Flashing the Image](#initial-setup-flashing-the-image)
    - [Important Credentials](#important-credentials)
 3. [Basic Usage](#basic-usage)
-   - [Network Configuration via RASPAP](#network-configuration-via-raspap)
+   - [Network Configuration via RaspAp](#network-configuration-via-raspap)
    - [Accessing the Video Control Interface](#accessing-the-video-control-interface)
    - [Video Playback Features](#video-playback-features)
    - [Uploading MP4 Files](#uploading-mp4-files)
@@ -38,10 +38,10 @@ Keep these credentials handy for accessing the various components of the system:
 - **Raspberry Pi OS Login**:
   - Username: pi
   - Password: q1w2e3r4
-- **RASPAP Wi-Fi Hotspot (Default)**:
-  - Network Name (SSID): RASPAP
+- **RaspAp Wi-Fi Hotspot (Default)**:
+  - Network Name (SSID): RaspAp
   - Password: ChangeMe
-- **RASPAP Web Interface** (http://raspberrypi.local):
+- **RaspAp Web Interface** (http://raspberrypi.local):
   - Username: admin
   - Password: secret
 - **Video Control Web Interface** (http://raspberrypi.local:5000):
@@ -49,25 +49,25 @@ Keep these credentials handy for accessing the various components of the system:
 
 ## Basic Usage
 
-### Network Configuration via RASPAP
+### Network Configuration via RaspAp
 
 Once the Raspberry Pi boots up with the flashed SD card, it creates a Wi-Fi hotspot.
 
 1. **Connect to the Hotspot**:
-   - Search for a Wi-Fi network named "RASPAP".
+   - Search for a Wi-Fi network named "RaspAp".
    - Connect to this network using the password: ChangeMe.
 
-2. **Accessing the RASPAP Web Interface**:
+2. **Accessing the RaspAp Web Interface**:
    - After connecting to the Raspberry Pi's Wi-Fi network, open a web browser.
    - Navigate to: http://raspberrypi.local (Alternatively, use http://10.3.141.1 when in hotspot mode).
    - Log in using the credentials provided in the previous section.
 
-3. **Using RASPAP**:
-   - RASPAP (Raspberry Pi Access Point) simplifies network management, allowing you to:
+3. **Using RaspAp**:
+   - RaspAp (Raspberry Pi Access Point) simplifies network management, allowing you to:
      - Monitor basic system statistics.
      - Configure the Raspberry Pi to connect to an existing Wi-Fi network.
      - Perform basic system commands like rebooting or shutting down the Pi.
-   - Note: If your computer is connected only to the Raspberry Pi's hotspot, your computer will not have internet access. To allow both internet access, use RASPAP to connect the Pi to your local Wi-Fi network, and then connect your computer to the same network.
+   - Note: If your computer is connected only to the Raspberry Pi's hotspot, your computer will not have internet access. To allow both internet access, use RaspAp to connect the Pi to your local Wi-Fi network, and then connect your computer to the same network.
    - For more details, visit: https://raspap.com/#promo
 
 ### Accessing the Video Control Interface
