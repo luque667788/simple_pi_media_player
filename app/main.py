@@ -146,16 +146,61 @@ def index():
     logger.info(f"Serving index.html. Current playlist: {media_playlist}")
     return render_template('index.html')
 
+import threading # Add this import at the top of your file
+
+# Add this global lock definition near your other global variables
+playlist_lock = threading.Lock()
+
+# Define this new helper function, for example, before your Flask route definitions
+def _background_transcode_task(app_instance, file_path, filename):
+    """
+    Handles transcoding in a background thread and updates the playlist upon success.
+    Needs access to global media_playlist and save_playlist_to_file.
+    """
+    global media_playlist # Make sure to declare media_playlist as global if modifying
+
+    # Use the app context in background threads for logging and other app-specific features
+    with app_instance.app_context():
+        logger = app_instance.logger # Get logger from the app instance
+        logger.info(f"Background transcoding started for: {filename} at path {file_path}")
+        
+        # Assuming transcode_video is defined elsewhere and accessible
+        # and that it operates on file_path, possibly modifying it in place
+        # or replacing it, but the 'filename' remains the identifier for the playlist.
+        transcode_result = transcode_video(file_path) 
+        
+        if transcode_result:
+            logger.info(f"Transcoding successful for: {filename}")
+            with playlist_lock: # Ensure thread-safe modification of the playlist
+                if filename not in media_playlist:
+                    media_playlist.append(filename)
+                    # Assuming save_playlist_to_file is defined elsewhere and accessible
+                    save_playlist_to_file() 
+                    logger.info(f"Added to playlist and saved: {filename}. Current playlist: {media_playlist}")
+                else:
+                    # This case might occur if synchronize_playlist_with_uploads ran first
+                    logger.info(f"File {filename} was already in playlist after transcoding. Playlist not re-saved by this task.")
+        else:
+            logger.warning(f"Video transcoding failed for: {filename}. File not added to playlist.")
+            # Optional: Consider deleting the file_path if transcoding failed and the raw file is not desired
+            # try:
+            #     os.remove(file_path)
+            #     logger.info(f"Removed original file {file_path} after failed transcoding.")
+            # except OSError as e:
+            #     logger.error(f"Error removing file {file_path} after failed transcoding: {e}")
+
+
 @app.route('/api/upload', methods=['POST'])
 def upload_files():
-    """Handles media file uploads via POST requests."""
-    global media_playlist
+    """Handles media file uploads. Files are saved, and transcoding is initiated in the background."""
+    # global media_playlist # media_playlist is now updated by the background task
+
     if 'mediaFiles' not in request.files:
         logger.warning("Upload attempt with no 'mediaFiles' part.")
         return jsonify({"error": "No file part in the request"}), 400
     
     files = request.files.getlist('mediaFiles')
-    uploaded_filenames = []
+    successfully_saved_for_processing = []
     errors = []
 
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -166,46 +211,56 @@ def upload_files():
             logger.error(f"Could not create upload folder: {e}")
             return jsonify({"error": "Could not create upload directory on server."}), 500
 
-    for file in files:
-        if file.filename == '':
+    for file_storage in files: # Renamed 'file' to 'file_storage' to avoid conflict with built-in
+        if file_storage.filename == '':
             logger.warning("Upload attempt with an empty filename.")
-            errors.append("One or more files had no selected filename.")
+            errors.append({"filename": "N/A", "error": "Empty filename."})
             continue
-        if file and allowed_file(file.filename):
-            filename = file.filename # Consider werkzeug.utils.secure_filename for production
+        
+        # Assuming allowed_file is defined elsewhere and accessible
+        if file_storage and allowed_file(file_storage.filename):
+            # It's good practice to secure the filename, though not explicitly requested here
+            # from werkzeug.utils import secure_filename
+            # filename = secure_filename(file_storage.filename)
+            filename = file_storage.filename 
             save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
             try:
-                file.save(save_path)
-                logger.info(f"File saved: {save_path}")
+                file_storage.save(save_path)
+                logger.info(f"File saved: {save_path}. Initiating background transcoding.")
                 
-                # Transcode the video after it's uploaded
-                transcode_result = transcode_video(save_path)
-                if transcode_result:
-                    logger.info(f"Video successfully transcoded: {filename}")
-                else:
-                    logger.warning(f"Video transcoding failed or was skipped for: {filename}")
+                # Start transcoding in a background thread
+                # Pass the current Flask app instance (named 'app') for context
+                thread = threading.Thread(target=_background_transcode_task, args=(app, save_path, filename))
+                thread.daemon = True # Allows the main application to exit even if threads are running
+                thread.start()
                 
-                if filename not in media_playlist: # Avoid duplicates
-                    media_playlist.append(filename)
-                uploaded_filenames.append(filename)
-                logger.info(f"Successfully uploaded, transcoded, and added to playlist: {filename}")
+                successfully_saved_for_processing.append(filename)
+                
             except Exception as e:
                 logger.error(f"Error saving file {filename}: {e}")
-                errors.append(f"Could not save file {filename}.")
-        elif file.filename:
-            logger.warning(f"Upload attempt with disallowed file type: {file.filename}")
-            errors.append(f"File type not allowed for {file.filename}.")
+                errors.append({"filename": filename, "error": f"Could not save file: {str(e)}"})
+        elif file_storage.filename: # If filename exists but is not allowed
+            logger.warning(f"Upload attempt with disallowed file type: {file_storage.filename}")
+            errors.append({"filename": file_storage.filename, "error": "File type not allowed."})
 
-    if uploaded_filenames:
-        save_playlist_to_file() # Save playlist after successful uploads
-        return jsonify({
-            "message": "Files processed.", 
-            "uploaded": uploaded_filenames, 
-            "playlist": media_playlist,
-            "errors": errors
-        }), 200 if not errors else 207 # 207 Multi-Status if some uploads failed
-    else:
-        return jsonify({"error": "No files were successfully uploaded.", "details": errors}), 400
+    if successfully_saved_for_processing:
+        # Return 202 Accepted: The request has been accepted for processing,
+        # but the processing has not been completed.
+        status_code = 202 
+        response_data = {
+            "message": "Files received and queued for background processing.", 
+            "files_accepted": successfully_saved_for_processing
+        }
+        if errors:
+            response_data["errors"] = errors
+            status_code = 207 # Multi-Status, if some succeeded and some failed during save/queue
+        
+        return jsonify(response_data), status_code
+    elif errors: # Only errors, no files accepted for processing
+        return jsonify({"error": "No files were successfully queued for processing.", "details": errors}), 400
+    else: # No files in request or other edge case where nothing was processed
+        return jsonify({"error": "No files provided or processed."}), 400
 
 @app.route('/api/playlist', methods=['GET'])
 def get_playlist():

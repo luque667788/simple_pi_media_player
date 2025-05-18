@@ -20,6 +20,7 @@ exec gunicorn --workers 1 \
         --log-level=info \
         --access-logfile "$APP_DIR/$LOG_FILE" \
         --error-logfile "$APP_DIR/$ERROR_LOG_FILE" \
+        --timeout 300 \
         app.main:app
 
 # The exec command above replaces the current process with gunicorn

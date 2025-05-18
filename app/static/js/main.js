@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Application state
     let editMode = false;
+    let currentPlaylistFiles = []; // Store current playlist filenames
 
     // --- API Communication Helper ---
     async function fetchAPI(endpoint, method = 'GET', body = null) {
@@ -210,6 +211,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update playlist UI, passing loop_mode
         updatePlaylistUI(data.playlist, data.currentFile, data.loop_mode);
+        if (data.playlist && Array.isArray(data.playlist)) {
+            currentPlaylistFiles = data.playlist; // Update current playlist files
+        }
         
         // Show/hide global next/prev buttons based on loop_mode and not in edit mode
         if (data.loop_mode === 'playlist' && !editMode) {
@@ -282,50 +286,89 @@ document.addEventListener('DOMContentLoaded', () => {
             uploadStatus.className = 'error-message';
             return;
         }
-        const formData = new FormData();
-        // Since we changed to single file upload, we only take the first file.
-        if (mediaUploadInput.files[0]) {
-            formData.append('mediaFiles', mediaUploadInput.files[0]);
-        } else {
-            uploadStatus.textContent = 'No file selected.';
+        const selectedFile = mediaUploadInput.files[0];
+
+        // Feature 1: Prevent Re-upload of Existing Files
+        if (currentPlaylistFiles.includes(selectedFile.name)) {
+            uploadStatus.textContent = `Error: File "${selectedFile.name}" already exists in the playlist.`;
             uploadStatus.className = 'error-message';
+            mediaUploadInput.value = ''; // Clear file input
             return;
         }
 
+        const formData = new FormData();
+        formData.append('mediaFiles', selectedFile);
+
         // Show overlay
-        overlayStatusText.textContent = 'Uploading and transcoding video... Please wait.';
+        overlayStatusText.textContent = `Uploading "${selectedFile.name}"... Please wait.`;
         uploadOverlay.style.display = 'flex';
         // Disable all buttons and inputs during upload
         document.querySelectorAll('button, input, select').forEach(el => el.disabled = true);
-
 
         uploadStatus.textContent = 'Uploading...';
         uploadStatus.className = '';
         const response = await fetchAPI('/upload', 'POST', formData);
 
-        // Hide overlay
-        uploadOverlay.style.display = 'none';
-        // Re-enable all buttons and inputs
-        document.querySelectorAll('button, input, select').forEach(el => el.disabled = false);
-        // Refresh status to correctly set disabled states based on player state
-        fetchAndRefreshStatus();
-
-
-        if (response) {
-            uploadStatus.textContent = response.message || 'Upload processed.';
-            if (response.errors && response.errors.length > 0) {
-                uploadStatus.textContent += ` Errors: ${response.errors.join(', ')}`;
+        if (response && response.files_accepted && response.files_accepted.length > 0) {
+            const uploadedFilename = response.files_accepted[0];
+            overlayStatusText.textContent = `Transcoding "${uploadedFilename}"... This may take a while.`;
+            // Don't hide overlay or re-enable inputs yet. Start polling.
+            pollForFileInPlaylist(uploadedFilename);
+        } else {
+            // Upload failed or was not accepted by the backend for processing
+            uploadOverlay.style.display = 'none';
+            document.querySelectorAll('button, input, select').forEach(el => el.disabled = false);
+            // fetchAPI would have set an error message in uploadStatus
+            if (!response) { // If fetchAPI itself failed
+                uploadStatus.textContent = uploadStatus.textContent || 'Upload request failed.';
                 uploadStatus.className = 'error-message';
-            } else {
-                uploadStatus.className = 'success-message';
+            } else if (response.error) { // If backend returned a specific error for the upload
+                 uploadStatus.textContent = response.error;
+                 uploadStatus.className = 'error-message';
+            } else if (response.errors && response.errors.length > 0) {
+                uploadStatus.textContent = `Upload error: ${response.errors.map(e => e.error || e.filename).join(', ')}`;
+                uploadStatus.className = 'error-message';
+            }
+             else {
+                uploadStatus.textContent = response.message || 'Upload processed, but file not queued for transcoding.';
+                uploadStatus.className = 'error-message'; // Treat as error if not accepted
             }
             mediaUploadInput.value = ''; // Clear file input
-            fetchAndRefreshStatus(); // Refresh playlist and status
-        } else {
-            // If fetchAPI returned null, it already set an error message in uploadStatus
-            // but we ensure the overlay is hidden and inputs are re-enabled.
+            fetchAndRefreshStatus(); // Refresh status to correctly set disabled states
         }
     });
+
+    async function pollForFileInPlaylist(filenameToWaitFor, maxAttempts = 60, interval = 5000) { // Poll for 5 minutes (60 * 5s)
+        let attempts = 0;
+
+        const poller = setInterval(async () => {
+            attempts++;
+            console.log(`Polling for ${filenameToWaitFor}, attempt ${attempts}`);
+            const statusData = await fetchAPI('/playlist');
+
+            if (statusData && statusData.playlist && statusData.playlist.includes(filenameToWaitFor)) {
+                clearInterval(poller);
+                uploadOverlay.style.display = 'none';
+                document.querySelectorAll('button, input, select').forEach(el => el.disabled = false);
+                
+                uploadStatus.textContent = `"${filenameToWaitFor}" successfully added and ready.`;
+                uploadStatus.className = 'success-message';
+                mediaUploadInput.value = ''; // Clear file input
+                fetchAndRefreshStatus(); // Final full refresh
+                return;
+            }
+
+            if (attempts >= maxAttempts) {
+                clearInterval(poller);
+                uploadOverlay.style.display = 'none';
+                document.querySelectorAll('button, input, select').forEach(el => el.disabled = false);
+                uploadStatus.textContent = `Error: Timed out waiting for "${filenameToWaitFor}" to appear in playlist. Check server logs.`;
+                uploadStatus.className = 'error-message';
+                mediaUploadInput.value = '';
+                fetchAndRefreshStatus();
+            }
+        }, interval);
+    }
 
     async function playSpecificFile(filename) {
         uploadStatus.textContent = `Stopping current playback to play "${filename}"...`;
