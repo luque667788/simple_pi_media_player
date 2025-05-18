@@ -31,7 +31,7 @@ A simple web-based media player controller for video playback.
 -   Uses MPlayer for video playback
 -   Persistent playlist storage with JSON
 -   Real-time UI updates
--   maps to frame buffer fb0.
+-   maps to frame buffer fb1.
 -   Provides logs to file in case of debugging problems
 
 ## Performance Optimization (Raspberry Pi)
