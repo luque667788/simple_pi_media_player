@@ -105,7 +105,7 @@ The video control interface offers several playback modes and controls:
 
 3. **Note on Playback Behavior**:
    - When a video finishes playing (without looping), the display will hold the last frame. Clicking 'Stop' will clear the screen.
-   - Due to limitations with MPlayer, real-time changes to the queue order while playing may have some restrictions.
+   - Due to limitations with MPlayer, real-time changes to the queue order while playing are not possible
 
 ### Uploading MP4 Files
 
