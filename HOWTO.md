@@ -22,7 +22,7 @@
 
 This document provides instructions on setting up and using the custom Raspberry Pi image for video playback on a small display. The system is designed to be easy to use while providing reliable playback of video content.
 
-Many of the information that is mentioned here is repeated in the delivery description you can find right here: https://gitshare.me/repo/41d890c1-ade8-4809-8dc9-f30df3288586?password=luiz
+Many of the information that is mentioned here is repeated in the delivery description you can find right here: https://fluttering-punch-572.notion.site/First-Delivery-Raspberry-Pi-Video-Playback-System-1f84d879764c8045bc55df3ba4b7ef5e
 
 However here I try to go a little more in detail on the topics.
 
