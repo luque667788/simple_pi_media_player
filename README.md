@@ -2,6 +2,8 @@
 
 A simple web-based media player controller optimized for video playback on embedded devices, particularly Raspberry Pi with small displays.
 
+For detailed information about the user interface and how to use the video player features, please refer to the [`HOWTO.md`](HOWTO.md) document.
+
 ## Features
 
 -   **Video Management**:
@@ -59,7 +61,7 @@ For production deployment, use the provided utility scripts:
   
 - **Access the web interface**: Navigate to `http://[device-ip]:5000` or `http://raspberrypi.local:5000` when running on Raspberry Pi
 
-For detailed information about the user interface and how to use the video player features, please refer to the [`HOWTO.md`](HOWTO.md) document.
+
 
 ## Performance Optimization
 
