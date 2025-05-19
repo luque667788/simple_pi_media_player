@@ -22,6 +22,10 @@
 
 This document provides instructions on setting up and using the custom Raspberry Pi image for video playback on a small display. The system is designed to be easy to use while providing reliable playback of video content.
 
+Many of the information that is mentioned here is repeated in the delivery description you can find right here: https://gitshare.me/repo/41d890c1-ade8-4809-8dc9-f30df3288586?password=luiz
+
+However here I try to go a little more in detail on the topics.
+
 ## Getting Started
 
 ### Initial Setup: Flashing the Image
@@ -45,7 +49,7 @@ Keep these credentials handy for accessing the various components of the system:
   - Username: admin
   - Password: secret
 - **Video Control Web Interface** (http://raspberrypi.local:5000):
-  - No separate login required; access is direct.
+  - No login required; access is direct.
 
 ## Basic Usage
 
@@ -80,7 +84,7 @@ The main application for controlling video playback has its own web interface.
 
 2. **Interface Overview**:
    - The user interface is designed to be simple and self-explanatory.
-   - It primarily handles video playback, uploading, and basic controls.
+   For more details on the playback modes and controls, refer to the [Video Playback Features](#video-playback-features) section.
 
 ### Video Playback Features
 
@@ -123,7 +127,7 @@ The video control interface offers several playback modes and controls:
    - Larger videos (~100MB): Several minutes (potentially around 5 minutes or more)
    - During transcoding of large videos, the CPU will work intensively and may become hot.
    
-5. **Upload Condition**: You can only upload videos when nothing is currently playing.
+5. **Upload Condition**: You can only upload videos when nothing is currently playing and the mplayer process is not running (click the stop button on the UI).
 
 ## System Management
 
@@ -139,6 +143,13 @@ The video control interface offers several playback modes and controls:
   sudo systemctl status simple_media_player.service
   ```
 
+- The application also includes these utility scripts that are used internally in the setup:
+  - `run_prod.sh` - Starts the application using Gunicorn
+  - `stop_app.sh` - Gracefully stops the running application
+  - `restart_app.sh` - Restarts the application by calling stop and run
+  - `clean_env.sh` - Cleans log files, playlist files, and uploaded videos
+  - `transcode_videos.sh` - Batch transcodes videos to optimize for display
+
 ### Troubleshooting and Basic Information
 
 - **Log Files**:
@@ -147,7 +158,7 @@ The video control interface offers several playback modes and controls:
 
 - **Development Folder**:
   - Custom code for the web server, frontend, and video player control resides in development/simple_pi_media_player/.
-  - A small README is present there, but modification is not recommended without familiarity with codebase.
+  - A small README is present there that attempts to give an introduction to the codebase, but modification is not recommended without familiarity with codebase.
 
 - **.env Configuration File**:
   - A .env file is included with variables that can be changed for custom setups.
@@ -163,7 +174,7 @@ The video control interface offers several playback modes and controls:
 
 ### System Configuration Details
 
-This section provides insight into how the Raspberry Pi system is configured and how could another developer configure it in the same way.
+This section provides insight into how the Raspberry Pi system is configured and how could another developer configure it in the same way (without using the prebuilt image that was provided).
 
 1. **OS Setup Script**:
    - The image includes an `OS_setup.sh` script documenting the system configuration process.
@@ -193,6 +204,78 @@ This section provides insight into how the Raspberry Pi system is configured and
 6. **Network Configuration**:
    - RaspAP installation (for Wi-Fi hotspot) must be done manually if setting up from scratch.
    - Command: `curl -sL https://install.raspap.com | bash`
+   ### Systemctl Setup
+
+   The video playback application is managed as a systemd service, ensuring it starts automatically on boot and can be easily controlled. Below is the configuration file used for the service:
+
+   ```ini
+   [Unit]
+   Description=Simple Media Player Service
+   After=network.target
+
+   [Service]
+   Type=simple
+   ExecStart=/bin/bash /pi/development/simple_pi_media_player/run_prod.sh
+   ExecStop=/bin/bash /pi/development/simple_pi_media_player/stop_app.sh
+   ExecReload=/bin/bash /pi/development/simple_pi_media_player/restart_app.sh
+   WorkingDirectory=/home/pi/development/simple_pi_media_player
+   Restart=on-failure
+   RestartSec=5
+   User=pi
+   Group=pi
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+   This file is located at `/systemd/system/simple_media_player.service` and can be edited using the following command:
+
+   ```bash
+   sudo nano /systemd/system/simple_media_player.service
+   ```
+
+   ### Key Features of the Service
+
+   - **Automatic Startup**: The service starts automatically when the Raspberry Pi boots up.
+   - **Restart on Failure**: If the application crashes, the service will attempt to restart it after 5 seconds.
+   - **Custom Scripts**: The service uses the provided `run_prod.sh`, `stop_app.sh`, and `restart_app.sh` scripts for managing the application lifecycle.
+   - **User and Group**: The service runs under the `pi` user and group for proper permissions.
+
+   ### Managing the Service
+
+   Use the following commands to control the service:
+
+   - Start the service:
+      ```bash
+      sudo systemctl start simple_media_player.service
+      ```
+   - Stop the service:
+      ```bash
+      sudo systemctl stop simple_media_player.service
+      ```
+   - Restart the service:
+      ```bash
+      sudo systemctl restart simple_media_player.service
+      ```
+   - Check the service status:
+      ```bash
+      sudo systemctl status simple_media_player.service
+      ```
+
+   ### Enabling the Service
+
+   To ensure the service starts on boot, enable it with:
+
+   ```bash
+   sudo systemctl enable simple_media_player.service
+   ```
+
+   If changes are made to the service file, reload the systemd daemon and restart the service:
+
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl restart simple_media_player.service
+   ```
 
 7. **Required Manual Steps** (if not using pre-built image):
    - Installing RaspAP when prompted by the setup script
@@ -202,7 +285,7 @@ This section provides insight into how the Raspberry Pi system is configured and
 
 ### Manual Installation Instructions
 
-An installation script is included in the development files that can install the application and dependencies on a compatible Raspberry Pi OS:
+The installation script provided serves as a template for users with Linux experience who wish to implement a custom solution. It has not been extensively tested and may require manual adjustments to ensure proper functionality. Users are advised to proceed with caution and make modifications as needed based on their specific requirements.
 
 - **Strong Recommendation**: Use the pre-built image provided by flashing the .img file.
 - **Warning**: The manual installation script has not been extensively tested.

@@ -1,11 +1,11 @@
 # Simple Media Player
 
-A simple web-based media player controller for video playback.
+A simple web-based media player controller optimized for video playback on embedded devices, particularly Raspberry Pi with small displays.
 
 ## Features
 
 -   **Video Management**:
-   -   Upload video files.
+   -   Upload video files with automatic transcoding for optimization.
    -   Delete videos from the playlist and disk (only when nothing is playing).
 -   **Playback Control**:
    -   Play, pause, and stop video playback.
@@ -15,33 +15,55 @@ A simple web-based media player controller for video playback.
    -   Toggle "Edit Playlist" mode to reorder items.
       -   In edit mode, playback stops, and controls are disabled.
    -   Drag-and-drop playlist items to reorder them.
-   -   Click "Save Playlist" to save the new order and exit edit mode. Playback will restart if something was running.
+   -   Click "Save Playlist" to save the new order and exit edit mode.
 
-## Usage
+## Project Structure
 
-1.  Start the Flask application: `python -m app.main`
-2.  Access the web interface by navigating to `http://raspberrypi.local:5000` in your browser.
-3.  Upload videos using the upload section.
-4.  Use the playback controls to manage video playback:
-    - Play/Pause: Control current playback
-    - Stop: Clears the screen and stops playback completely
-    - Next/Previous: Navigate through playlist items
-    - Loop settings: Enable looping for single files or entire playlists
-5.  Click "Edit Playlist" to rearrange your playlist.
+- **Application Code**: 
+  - `app/` - Main Python Flask application directory
+  - `app/main.py` - Entry point for the web application
+  - `app/mplayer_controller.py` - Handles interaction with MPlayer
+  - `app/static/` - CSS and JavaScript assets
+  - `app/templates/` - HTML templates
+  - `app/uploads/` - Directory for video files
 
-## Technical Details
+- **Utility Scripts**:
+  - `run_prod.sh` - Starts the application using Gunicorn
+  - `stop_app.sh` - Gracefully stops the running application
+  - `restart_app.sh` - Restarts the application by calling stop and run
+  - `clean_env.sh` - Cleans log files and other temporary files
+  - `transcode_videos.sh` - Batch transcodes videos to optimize for display
+  - `install.sh` - Installs dependencies and sets up the application
 
--   Built with Flask backend for responsive web control
--   Uses MPlayer for optimized video playback on resource-constrained devices
--   Persistent playlist storage with JSON for reliable operation
--   Real-time UI updates for synchronized control experience
--   Maps directly to frame buffer fb0 for direct display output
--   Provides detailed logs to file for troubleshooting and debugging
--   Configured as a systemd service for automatic startup on boot
+## Development Usage
 
-## Performance Optimization (Raspberry Pi)
+1.  Clone the repository.
+2.  Run the installation script: `./install.sh`
+    *   This will install `mplayer`, `ffmpeg`, and Python dependencies.
+3.  Activate the virtual environment: `source videoplayer/bin/activate`
+4.  Start the Flask development server: `python -m app.main`
+5.  Access the web interface at: `http://localhost:5000`
 
-To improve performance on resource-constrained devices like the Raspberry Pi, two main strategies are employed:
+## Production Usage
+
+For production deployment, use the provided utility scripts:
+
+- **Start the application**: `./run_prod.sh`  
+  Launches the application using Gunicorn for better performance and reliability.
+  
+- **Stop the application**: `./stop_app.sh`  
+  Gracefully terminates the running application.
+  
+- **Restart the application**: `./restart_app.sh`  
+  Performs a clean restart by stopping and starting the application.
+  
+- **Access the web interface**: Navigate to `http://[device-ip]:5000` or `http://raspberrypi.local:5000` when running on Raspberry Pi
+
+For detailed information about the user interface and how to use the video player features, please refer to the [`HOWTO.md`](HOWTO.md) document.
+
+## Performance Optimization
+
+Two main strategies are employed for optimized performance:
 
 1.  **Video Transcoding**:
     *   When videos are uploaded via the web interface, they undergo automatic transcoding to optimize for the Pi's display and processing capabilities.
@@ -60,22 +82,18 @@ To improve performance on resource-constrained devices like the Raspberry Pi, tw
 
 ## Environment Variables (.env)
 
-The application and associated scripts can be configured using a `.env` file in the project root. Create this file if it doesn't exist.
+The application and associated scripts can be configured using a `.env` file in the project root:
 
 ```dotenv
 # General
 KTV_TARGET_DEVICE=raspberrypi # Set to 'laptop' or other for non-Pi X11 output
 
-# MPlayer performance options for Raspberry Pi (used by mplayer_controller.py)
+# MPlayer performance options
 MPLAYER_RPI_ENABLE_FRAMEDROP=true
 MPLAYER_RPI_LAVDOPTS="lowres=1:fast:skiploopfilter=all"
 
-# FFmpeg transcoding options (used by transcode_videos.sh)
-# This script now OVERWRITES files in FFMPEG_INPUT_DIR.
+# FFmpeg transcoding options
 FFMPEG_INPUT_DIR="app/uploads"
-# FFMPEG_OUTPUT_DIR and FFMPEG_OUTPUT_SUFFIX are no longer used in overwrite mode.
-# FFMPEG_OUTPUT_DIR="app/uploads_transcoded"
-# FFMPEG_OUTPUT_SUFFIX="_small"
 FFMPEG_SCALE="240:320"
 FFMPEG_FPS="15"
 FFMPEG_VIDEO_BITRATE="300k"
@@ -84,6 +102,16 @@ FFMPEG_VIDEO_CODEC="libx264"
 FFMPEG_AUDIO_CODEC="aac"
 ```
 
+## Technical Details
+
+-   Built with **Flask** backend for responsive web control
+-   Uses **MPlayer** for optimized video playback on resource-constrained devices
+-   **Persistent playlist** storage with JSON for reliable operation
+-   **Real-time UI updates** for synchronized control experience
+-   **Direct framebuffer output** for display on embedded devices
+-   **Detailed logging** to help troubleshoot issues
+-   Configured as a **systemd service** for automatic startup on boot
+
 ## Installation
 
 1.  Clone the repository.
@@ -91,46 +119,16 @@ FFMPEG_AUDIO_CODEC="aac"
     *   This will install `mplayer`, `ffmpeg`, and Python dependencies.
 3.  Activate the virtual environment: `source videoplayer/bin/activate`
 
-## System Setup Reference
+## System Deployment
 
-The project includes an `OS_setup.sh` script that serves as a reference for how the Raspberry Pi system is configured. While we recommend using the pre-built image, this script documents the setup process if you want to start from a fresh Raspberry Pi OS installation.
+For information about:
+- Setting up the Raspberry Pi hardware
+- Flashing the pre-built image
+- Network configuration
+- Accessing the interface
+- Hardware pinout details
+- System configuration details (display, audio, network)
+- Manual installation steps
+- Troubleshooting
 
-### What the Setup Script Does
-
-1. **System Configuration**:
-   - Updates and upgrades the system packages
-   - Installs required tools (git, curl, raspi-config)
-   - Enables SSH for remote access
-   - Enables SPI and I2C interfaces required for the display
-
-2. **Display Configuration**:
-   - Configures the ST7789V SPI display by adding framebuffer overlay to `/boot/firmware/config.txt`
-   - Sets up resolution, pin connections, and rotation parameters
-   - Updates framebuffer console mapping in boot command line
-   - **Important**: Disables HDMI video output (`hdmi_blanking=2`) to save resources and prevent conflicts
-   
-3. **Audio Configuration**:
-   - Note that while HDMI video is disabled, audio through HDMI port 0 is still available
-   - If you need audio output, connect to the HDMI port and configure audio settings as needed
-
-4. **Network Setup**:
-   - Includes manual step for installing RaspAP for Wi-Fi hotspot functionality
-   - This must be done manually by running: `curl -sL https://install.raspap.com | bash`
-
-5. **Application Installation**:
-   - Creates development folder and clones the media player repository
-   - Runs the installation script to set up dependencies
-   - Configures a systemd service for automatic startup
-
-### Manual Steps Required
-
-Even if using the setup script, some manual intervention is required:
-
-1. You must manually install RaspAP when prompted
-2. A system reboot is recommended after running the script
-3. If framebuffer device `/dev/fb0` is not detected immediately, a reboot will be necessary
-4. You may need to adjust permissions or system settings based on your specific Raspberry Pi model
-
-### Note on HDMI Configuration
-
-The script intentionally disables HDMI video output to ensure all resources are directed to the SPI display. If you require both displays or want to re-enable HDMI, you'll need to remove or modify the `hdmi_blanking=2` line in `/boot/firmware/config.txt`.
+Please refer to the comprehensive [`HOWTO.md`](HOWTO.md) document.
