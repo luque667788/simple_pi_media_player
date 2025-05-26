@@ -37,8 +37,8 @@ else
     echo "HDMI blanking setting already present in $BOOT_CONFIG."
 fi
 
-echo "📁 Verifying framebuffer /dev/fb0 exists..."
-FRAMEBUFFER_PATH="/dev/fb0"
+echo "📁 Verifying framebuffer /dev/fb1 exists..."
+FRAMEBUFFER_PATH="/dev/fb1"
 if [ -e "$FRAMEBUFFER_PATH" ]; then
     echo "✅ Framebuffer $FRAMEBUFFER_PATH exists."
 else
