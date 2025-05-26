@@ -424,7 +424,7 @@ def control_stop():
             logger.info("Attempting to clear framebuffer...")
             fb_width, fb_height, fb_bpp = 240, 320, 16  # Defaults
             fb_size = fb_width * fb_height * (fb_bpp // 8)
-            fb_clear_command = ["dd", "if=/dev/zero", "of=/dev/fb0", f"bs={fb_size}", "count=1"]
+            fb_clear_command = ["dd", "if=/dev/zero", "of=/dev/fb1", f"bs={fb_size}", "count=1"]
             process = subprocess.Popen(fb_clear_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = process.communicate(timeout=5) # Add a timeout
             if process.returncode == 0:
@@ -441,7 +441,7 @@ def control_stop():
                 process.kill() # Ensure the process is killed if it times out
                 process.communicate() # Clean up
         except FileNotFoundError:
-            logger.warning("dd command not found. Framebuffer not cleared. This is expected if not on a system with /dev/fb0.")
+            logger.warning("dd command not found. Framebuffer not cleared. This is expected if not on a system with /dev/fb1.")
         except Exception as e:
             logger.error(f"An error occurred while trying to clear framebuffer: {e}")
         logger.info("Playback stopped. MPlayer terminated. Index reset.")

@@ -37,7 +37,17 @@ For detailed information about the user interface and how to use the video playe
   - `transcode_videos.sh` - Batch transcodes videos to optimize for display
   - `install.sh` - Installs dependencies and sets up the application
 
+
 ## Development Usage
+=======
+-   Built with Flask backend for responsive web control
+-   Uses MPlayer for optimized video playback on resource-constrained devices
+-   Persistent playlist storage with JSON for reliable operation
+-   Real-time UI updates for synchronized control experience
+-   Maps directly to frame buffer fb1 for direct display output
+-   Provides detailed logs to file for troubleshooting and debugging
+-   Configured as a systemd service for automatic startup on boot
+
 
 1.  Clone the repository.
 2.  Run the installation script: `./install.sh`
@@ -133,4 +143,50 @@ For information about:
 - Manual installation steps
 - Troubleshooting
 
+
 Please refer to the comprehensive [`HOWTO.md`](HOWTO.md) document.
+=======
+### What the Setup Script Does
+
+1. **System Configuration**:
+   - Updates and upgrades the system packages
+   - Installs required tools (git, curl, raspi-config)
+   - Enables SSH for remote access
+   - Enables SPI and I2C interfaces required for the display
+
+2. **Display Configuration**:
+   - Configures the ST7789V SPI display by adding framebuffer overlay to `/boot/firmware/config.txt`
+   - Sets up resolution, pin connections, and rotation parameters
+   - Updates framebuffer console mapping in boot command line
+   - **Important**: Disables HDMI video output (`hdmi_blanking=2`) to save resources and prevent conflicts
+   
+3. **Audio Configuration**:
+   - Note that while HDMI video is disabled, audio through HDMI port 0 is still available
+   - If you need audio output, connect to the HDMI port and configure audio settings as needed
+
+4. **Network Setup**:
+   - Includes manual step for installing RaspAP for Wi-Fi hotspot functionality
+   - This must be done manually by running: `curl -sL https://install.raspap.com | bash`
+
+5. **Application Installation**:
+   - Creates development folder and clones the media player repository
+   - Runs the installation script to set up dependencies
+   - Configures a systemd service for automatic startup
+
+### Manual Steps Required
+
+Even if using the setup script, some manual intervention is required:
+
+1. You must manually install RaspAP when prompted
+2. A system reboot is recommended after running the script
+3. If framebuffer device `/dev/fb1` is not detected immediately, a reboot will be necessary
+4. You may need to adjust permissions or system settings based on your specific Raspberry Pi model
+
+### Note on HDMI Configuration
+
+TThe script always enables the HDMI output by setting up the /boot/firmware/config.txt file the following lines:
+
+`hdmi_force_hotplug=1`
+`hdmi_drive=2`
+
+So that it is always mapped to frame buffer 0 and the terminal should be presented there in the HDMI instead of in the spi display.

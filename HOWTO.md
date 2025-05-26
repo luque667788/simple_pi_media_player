@@ -198,7 +198,7 @@ This section provides insight into how the Raspberry Pi system is configured and
    - You can connect to the HDMI port for audio despite no video being displayed.
 
 5. **Framebuffer Setup**:
-   - The system uses framebuffer device (/dev/fb0) to send video data to the display.
+   - The system uses framebuffer device (/dev/fb1) to send video data to the display.
    - This is configured through dtoverlay settings in /boot/firmware/config.txt and cmdline.txt modifications.
 
 6. **Network Configuration**:

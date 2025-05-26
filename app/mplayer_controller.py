@@ -88,7 +88,7 @@ class MPlayerController:
 
         if target_device == "raspberrypi":
             rpi_options = [
-                "-vo", "fbdev:/dev/fb0",
+                "-vo", "fbdev:/dev/fb1",
                 "-x", "240",
                 "-y", "320",
                 "-bpp", "16",
@@ -421,7 +421,7 @@ class MPlayerController:
         cmd = ["mplayer", "-slave", "-input", f"file={MPLAYER_FIFO_PATH}", "-quiet", "-nolirc"]
 
         if target_device == "raspberrypi":
-            cmd.extend(["-vo", "fbdev:/dev/fb0", "-x", "240", "-y", "320", "-bpp", "16", "-vf", "scale=240:320"])
+            cmd.extend(["-vo", "fbdev:/dev/fb1", "-x", "240", "-y", "320", "-bpp", "16", "-vf", "scale=240:320"])
         else: 
             cmd.extend(["-vo", "x11"])
         
